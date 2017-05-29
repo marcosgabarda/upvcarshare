@@ -8,9 +8,11 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.templatetags.l10n import localize
+from django.utils import timezone
 from django.utils.html import strip_tags
 from django.utils.safestring import mark_safe
 from django.utils.six import python_2_unicode_compatible
+from django.utils.timezone import pytz
 from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 
@@ -60,47 +62,50 @@ class Notification(TimeStampedModel):
         """Creates the text representation of the notification."""
         value = ""
         try:
+            time_zone = pytz.timezone("Europe/Madrid")
+            target_date = timezone.localtime(self.target.departure, time_zone)
+            target_date = localize(target_date)
             if self.verb == JOIN:
                 # actor is a user and target is a journey
                 value = _("%(user)s se ha <strong>unido</strong> al viaje <strong>%(journey)s</strong> del %(date)s") % {
                     "user": six.text_type(self.actor),
                     "journey": six.text_type(self.target).lower(),
-                    "date": localize(self.target.departure),
+                    "date": target_date,
                 }
             elif self.verb == LEAVE:
                 value = _("%(user)s ha <strong>abandonado</strong> el viaje <strong>%(journey)s</strong> del %(date)s") % {
                     "user": six.text_type(self.actor),
                     "journey": six.text_type(self.target).lower(),
-                    "date": localize(self.target.departure),
+                    "date": target_date,
                 }
             elif self.verb == THROW_OUT:
-                value = _("%(user)s te ha <strong>expulsado</strong> el viaje <strong>%(journey)s</strong> del %(date)s") % {
+                value = _("%(user)s te ha <strong>expulsado</strong> del viaje <strong>%(journey)s</strong> del %(date)s") % {
                     "user": six.text_type(self.actor),
                     "journey": six.text_type(self.target).lower(),
-                    "date": localize(self.target.departure),
+                    "date": target_date,
                 }
             elif self.verb == CONFIRM:
                 value = _("%(user)s te ha <strong>confirmado</strong> para el viaje <strong>%(journey)s</strong> del %(date)s") % {
                     "user": six.text_type(self.actor),
                     "journey": six.text_type(self.target).lower(),
-                    "date": localize(self.target.departure),
+                    "date": target_date,
                 }
             elif self.verb == REJECT:
                 value = _("%(user)s te ha <strong>rechazado</strong> para el viaje <strong>%(journey)s</strong> del %(date)s") % {
                     "user": six.text_type(self.actor),
                     "journey": six.text_type(self.target).lower(),
-                    "date": localize(self.target.departure),
+                    "date": target_date,
                 }
             elif self.verb == CANCEL:
                 value = _("El viaje <strong>%(journey)s</strong> del %(date)s ha sido <strong>cancelado</strong>") % {
                     "journey": six.text_type(self.actor).lower(),
-                    "date": localize(self.actor.departure),
+                    "date": target_date,
                 }
             elif self.verb == MESSAGE:
                 value = _("%(user)s ha mandado un <strong>nuevo mensaje</strong> en <strong>%(journey)s</strong> del %(date)s") % {
                     "user": six.text_type(self.actor),
                     "journey": six.text_type(self.target).lower(),
-                    "date": localize(self.target.departure),
+                    "date": target_date,
                 }
         except AttributeError:
             pass
