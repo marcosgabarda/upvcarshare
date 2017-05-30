@@ -62,7 +62,7 @@ class JourneysHelpersTest(TestCase):
 
     def test_expand_september(self):
         journey = JourneyFactory()
-        journey.departure = journey.departure.replace(month=9)
+        journey.departure = journey.departure.replace(day=1, month=9)
         journey.save()
 
         rule = recurrence.Rule(recurrence.DAILY)
