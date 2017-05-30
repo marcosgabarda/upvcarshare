@@ -220,6 +220,14 @@ class SmartJourneyForm(forms.ModelForm):
                 raise forms.ValidationError(_("No puedes crear viajes que llegues antes de salir"))
         return arrival
 
+    def clean_free_places(self):
+        free_places = self.cleaned_data["free_places"]
+        transport = self.cleaned_data["transport"]
+        if transport is not None and free_places > transport.default_places:
+            raise forms.ValidationError(_("No puedes ofertar más plazas que las que tienes en el transporte"))
+        return free_places
+
+
     def save(self, commit=True, **kwargs):
         """When save a journey form, you have to provide an user."""
         user = self.user

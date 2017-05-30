@@ -40,7 +40,7 @@
                 {% journey_item journey %}
             {% empty %}
                 <h3 class="text-muted">{% trans "No hemos encontrado viajes recomendados" %}</h3>
-                <p class="lead">{% trans "Puedes crear los viajes en los que necesitas transporte para que te mostremos aquí una lista de conducotres que pueden llevarte a tu destino." %}</p>
+                <p class="lead">{% trans "Puedes crear los viajes en los que necesitas transporte para que te mostremos aquí una lista de conductores que pueden llevarte a tu destino." %}</p>
                 <a href="{% url "journeys:create" %}" class="btn btn-lg btn-primary">{% trans "Crear viaje" %}</a>
             {% endfor %}
         </div>
