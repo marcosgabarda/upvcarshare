@@ -187,7 +187,8 @@ class JourneyManager(models.GeoManager):
                 "departure__gte": departure_lower,
             }))
         now = timezone.now()
-        queryset = self.available(user=user, ignore_full=ignore_full).exclude(user=user, departure__lt=now) \
+        queryset = self.available(user=user, ignore_full=ignore_full)\
+            .exclude(user=user, departure__lt=now, disabled=True) \
             .filter(reduce(lambda x, y: x | y, conditions)) \
             .order_by("departure")
         return queryset
