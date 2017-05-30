@@ -4,9 +4,11 @@ from __future__ import unicode_literals, print_function, absolute_import
 import datetime
 
 import floppyforms
+import pytz
 from django import forms
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils.timezone import make_aware
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 
@@ -227,7 +229,6 @@ class SmartJourneyForm(forms.ModelForm):
             raise forms.ValidationError(_("No puedes ofertar más plazas que las que tienes en el transporte"))
         return free_places
 
-
     def save(self, commit=True, **kwargs):
         """When save a journey form, you have to provide an user."""
         user = self.user
@@ -366,6 +367,17 @@ class SearchJourneyForm(forms.Form):
     def clean_distance(self):
         distance = self.cleaned_data["distance"]
         return float(distance)
+
+    def clean_departure_time(self):
+        departure_date = self.cleaned_data["departure_date"]
+        departure_time = self.cleaned_data["departure_time"]
+        departure_datetime = make_aware(
+            datetime.datetime.combine(departure_date, departure_time),
+            pytz.timezone("Europe/Madrid")
+        )
+        time_zone = pytz.timezone("UTC")
+        departure_datetime = timezone.localtime(departure_datetime, time_zone)
+        return departure_datetime.time()
 
     def search(self, user):
         position = self.cleaned_data["position"]
