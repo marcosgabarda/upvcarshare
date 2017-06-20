@@ -9,7 +9,7 @@
   },
   "scripts": {
     "watch": "gulp",
-    "build": "gulp build"
+    "build": "gulp deploy"
   },
   "devDependencies": {
     "angular": "^1.5.5",
