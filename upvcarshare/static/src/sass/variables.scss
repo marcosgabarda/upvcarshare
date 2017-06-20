@@ -9,8 +9,17 @@ $brand-danger: $upv-orange !default;
 
 $enable-flex: true;
 
-$font-family-sans-serif: Arial, sans-serif !default;
+$font-family-sans-serif: Arial, "Helvetica", sans-serif !default;
 $body-color: $upv-grey;
 $body-bg: #d7d6d1;
 
 $font-size-root: 12.8px !default;
+
+// Override grid
+
+$container-max-widths: (
+  sm: 540px,
+  md: 720px,
+  lg: 950px,
+  xl: 950px
+) !default;
