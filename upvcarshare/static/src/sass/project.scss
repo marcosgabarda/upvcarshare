@@ -30,7 +30,7 @@ html, body{
   background-color: #000;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   .red {
-    background-color: rgb(204, 1, 1);
+    background-color: #666666;
     height: 10px;
   }
 }
@@ -39,6 +39,7 @@ html, body{
   padding-top: 16px;
   padding-bottom: 16px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  border-bottom: 3px solid #000;
 }
 
 .section-navbar {
@@ -67,4 +68,18 @@ html, body{
 .bg-upv-dark-grey {
   color: $gray-lighter;
   background-color: $upv-dark-grey;
+}
+
+h1, .h1 {
+  color: $upv-red; font-weight: normal
+}
+h2, .h2 {
+  color: $upv-darker-grey; font-weight: bold
+}
+h3, .h3 {
+  color: #495069; font-weight: bold
+}
+
+.title {
+  max-height: 49px;
 }

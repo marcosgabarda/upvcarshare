@@ -1,6 +1,10 @@
 # Docker-compose file to launch services during the development.
 version: '2'
 
+volumes:
+  db-data:
+    driver: local
+
 services:
 
   app:
@@ -14,3 +18,15 @@ services:
       - .:/app
     ports:
       - "8888:8888"
+
+  db:
+    build: compose/postgis/.
+    image: upvcarshare/postgis
+    container_name: upvcarshare-db
+    volumes:
+      - db-data:/var/lib/postgresql
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: potato
+      POSTGRES_DB: upvcarshare
