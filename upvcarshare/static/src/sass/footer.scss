@@ -1,0 +1,11 @@
+footer {
+  @extend .container;
+  padding-top: 5px;
+  font-size: 90%;
+  background-color: #fff;
+  border-top: 1px solid #000;
+  .list-inline {
+    margin-bottom: 0;
+  }
+  min-height: 77px;
+}

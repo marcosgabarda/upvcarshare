@@ -22,6 +22,7 @@
             </div>
         </div>
     </div>
+    {% block navbar %}
     <div class="container section-navbar">
         <nav class="navbar navbar-full navbar-dark bg-upv-dark-grey">
             {% if request.user.is_authenticated %}
@@ -74,4 +75,47 @@
             {% endif %}
         </nav>
     </div>
+    {% endblock navbar %}
 {% endblock header %}
+
+{% block footer %}
+    <footer>
+        <div class="row">
+            <div class="col-xs-7">
+                <ul class="list-inline">
+                    <li class="list-inline-item">
+                        <a href="http://www.upv.es/otros/como-llegar-upv/index-es.html" title="{% trans "Cómo llegar" %}">
+                            {% trans "Cómo llegar" %}
+                        </a>&nbsp;I
+                    </li>
+                    <li class="list-inline-item">
+                        <a href="http://www.upv.es/plano/plano-2d-es.html" title="{% trans "Planos" %}">
+                            {% trans "Planos" %}
+                        </a>&nbsp;I
+                    </li>
+                    <li class="list-inline-item">
+                        <a href="http://www.upv.es/otros/contacto-es.html" title="{% trans "Contacto" %}">
+                            {% trans "Contacto" %}
+                        </a>
+                    </li>
+                </ul>
+                <p>Universitat Politècnica de València &copy; 2017 · Tel. (+34) 96 387 70 00 · <a href="mailto:informacion@upv.es">informacion@upv.es</a></p>
+            </div>
+            <div class="col-xs-2">
+                <a href="http://www.campushabitat5u.com/" title="{% trans "CAMPUS HABITAT (abre ventana nueva)" %}" rel="external" onclick="target='_blank'">
+                    <img src="{% static "img/campus_excelenciaH5.png" %}" alt="{% trans "CAMPUS HABITAT" %}">
+                </a>
+            </div>
+            <div class="col-xs-2">
+                <a href="http://www.vlc-campus.com/" title="{% trans "VLC-CAMPUS (abre ventana nueva)" %}" rel="external" onclick="target='_blank'">
+                    <img src="{% static "img/campus_excelenciaVLC.png" %}" alt="{% trans "VLC-CAMPUS" %}">
+                </a>
+            </div>
+            <div class="col-xs-1 text-xs-right">
+                <a href="http://www.upv.es/entidades/AMAPUOC/" title="{% trans "EMAS" %}">
+                    <img src="{% static "img/EMASupv.png" %}" alt="{% trans "EMAS upv" %}" width="33" height="62">
+                </a>
+            </div>
+        </div>
+    </footer>
+{% endblock footer %}
