@@ -1,0 +1,25 @@
+.access-hero {
+  margin: 0 -15px;
+  width: auto;
+  height: 240px;
+  background-image: url("../img/hero.png");
+  background-size: 100% 100%;
+}
+
+h1.access-title {
+  color: $upv-purple-2;
+  text-align: center;
+  font-size: 32px;
+}
+
+.access-link {
+  font-size: 16px;
+  margin-top: 15px;
+  height: 105px;
+  background-color: $upv-purple-3;
+  text-align: center;
+  padding-top: 55px;
+  a, a:hover {
+    color: #fff;
+  }
+}

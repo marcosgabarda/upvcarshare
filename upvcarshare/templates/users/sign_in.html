@@ -2,19 +2,20 @@
 {% load i18n %}
 {% load socialaccount %}
 
-{% block section_title %}
-    <div class="row">
-        <div class="col-xs-12">
-            <h2>{% trans "Acceder" %}</h2>
-        </div>
+{% block navbar %}
+    <div class="container">
+        <div class="access-hero"></div>
     </div>
-{% endblock %}
+{% endblock navbar %}
 
 {% block content %}
     <div class="row">
         <div class="col-xs-12">
-            <a href="{% provider_login_url "openid" openid="https://yo.rediris.es/soy/@upv.es" next=next %}" class="btn btn-primary">
-                {% trans "Acceso con credenciales UPV" %}
+            <h1 class="access-title">{% trans "Compartir coche en la UPV" %}</h1>
+        </div>
+        <div class="col-xs-12 access-link">
+            <a href="{% provider_login_url "openid" openid="https://yo.rediris.es/soy/@upv.es" next=next %}">
+                [ {% trans "Acceso" %} ]
             </a>
         </div>
     </div>
