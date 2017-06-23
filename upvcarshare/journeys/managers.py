@@ -21,7 +21,7 @@ def recommended_condition(journey, override_distance=None):
     :param journey:
     :param override_distance:
     """
-    key = "residence{}" if journey.kind == GOING else "campus{}"
+    key = "template__residence{}" if journey.kind == GOING else "template__campus{}"
     distance = getattr(journey, key.format("")).distance if override_distance is None else override_distance
     return {
         key.format("__position__distance_lte"): (
@@ -47,24 +47,7 @@ class ResidenceManager(models.GeoManager):
         )
 
 
-class JourneyQuerySet(models.QuerySet):
-
-    def visible(self, user=None):
-        """Journey visible for the given user."""
-        if user is not None:
-            return self.filter(user__groups=user.groups.all())
-        return self
-
-
-class JourneyManager(models.GeoManager):
-    """Manager for Journeys."""
-
-    def get_queryset(self):
-        return JourneyQuerySet(self.model, using=self._db)
-
-    def visible(self, user=None):
-        """Journey visible for the given user."""
-        return self.get_queryset().visible(user=user)
+class JourneyTemplateManager(models.GeoManager):
 
     def smart_create(self, user, origin, destination, departure, transport=None):
         """Enhanced method to create journeys"""
@@ -86,6 +69,26 @@ class JourneyManager(models.GeoManager):
             data["free_places"] = transport.default_places
         return self.create(**data)
 
+
+class JourneyQuerySet(models.QuerySet):
+
+    def visible(self, user=None):
+        """Journey visible for the given user."""
+        if user is not None:
+            return self.filter(user__groups=user.groups.all())
+        return self
+
+
+class JourneyManager(models.GeoManager):
+    """Manager for Journeys."""
+
+    def get_queryset(self):
+        return JourneyQuerySet(self.model, using=self._db)
+
+    def visible(self, user=None):
+        """Journey visible for the given user."""
+        return self.get_queryset().visible(user=user)
+
     def available(self, user=None, kind=None, ignore_full=False):
         """Gets all available journeys.
         :param user:
@@ -93,9 +96,9 @@ class JourneyManager(models.GeoManager):
         :param ignore_full:
         """
         now = timezone.now()
-        queryset = self.visible(user).filter(driver__isnull=False, departure__gt=now)
+        queryset = self.visible(user).filter(template__driver__isnull=False, departure__gt=now)
         if kind is not None:
-            queryset = queryset.filter(kind=kind)
+            queryset = queryset.filter(template__kind=kind)
         if ignore_full:
             return queryset
         # NOTE: annotate QuerySet method has problems with Oracle, so, we have to
@@ -117,8 +120,8 @@ class JourneyManager(models.GeoManager):
             nearby = nearby.filter(**{key: (geometry, distance)})
         else:
             nearby = nearby.filter(
-                Q(residence__position__distance_lte=(geometry, distance)) |
-                Q(campus__position__distance_lte=(geometry, distance))
+                Q(template__residence__position__distance_lte=(geometry, distance)) |
+                Q(template__campus__position__distance_lte=(geometry, distance))
             )
         return nearby
 
@@ -128,7 +131,7 @@ class JourneyManager(models.GeoManager):
         :param user:
         """
         now = timezone.now()
-        queryset = self.filter(user=user, driver__isnull=True, departure__gt=now)
+        queryset = self.filter(template__user=user, template__driver__isnull=True, departure__gt=now)
         if kind is not None:
             queryset = queryset.filter(kind=kind)
         return queryset
@@ -152,7 +155,8 @@ class JourneyManager(models.GeoManager):
         if not conditions:
             return self.none()
         now = timezone.now()
-        queryset = self.available(user=user, kind=kind, ignore_full=ignore_full).exclude(user=user, departure__lt=now)\
+        queryset = self.available(user=user, kind=kind, ignore_full=ignore_full)\
+            .exclude(template__user=user, departure__lt=now)\
             .filter(reduce(lambda x, y: x | y, conditions))\
             .order_by("departure")
         return queryset
@@ -177,7 +181,7 @@ class JourneyManager(models.GeoManager):
         kinds = [GOING, RETURN]
         conditions = []
         for kind in kinds:
-            key = "residence{}" if kind == GOING else "campus{}"
+            key = "template__residence{}" if kind == GOING else "template__campus{}"
             conditions.append(Q(**{
                 key.format("__position__distance_lte"): (
                     position,
@@ -188,14 +192,14 @@ class JourneyManager(models.GeoManager):
             }))
         now = timezone.now()
         queryset = self.available(user=user, ignore_full=ignore_full)\
-            .exclude(user=user, departure__lt=now, disabled=True) \
+            .exclude(template__user=user, departure__lt=now, disabled=True) \
             .filter(reduce(lambda x, y: x | y, conditions)) \
             .order_by("departure")
         return queryset
 
     def overlaps(self, user, departure, time_window):
         """Returns a queryset with the overlapping journeys."""
-        return self.filter(user=user).filter(
+        return self.filter(template__user=user).filter(
             departure__gte=(departure - datetime.timedelta(minutes=time_window)),
             departure__lte=(departure + datetime.timedelta(minutes=time_window))
         )
@@ -214,7 +218,7 @@ class MessageManager(models.Manager):
         :param journey:
         """
         if journey is None:
-            return self.filter(Q(journey__user=user) | Q(journey__passengers__user=user))
+            return self.filter(Q(journey__template__user=user) | Q(journey__passengers__user=user))
         if not journey.is_messenger_allowed(user):
             return self.none()
         return self.filter(journey=journey)

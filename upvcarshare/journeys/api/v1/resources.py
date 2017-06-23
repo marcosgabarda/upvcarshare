@@ -77,7 +77,7 @@ class JourneyResource(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super(JourneyResource, self).get_queryset()
         if self.request.query_params.get('owned'):
-            queryset = queryset.filter(user=self.request.user)
+            queryset = queryset.filter(template__user=self.request.user)
         if self.request.query_params.get('joined'):
             queryset = queryset.filter(passengers__user=self.request.user)
         return queryset
@@ -231,7 +231,7 @@ class RecurrenceJourneysResource(viewsets.ReadOnlyModelViewSet):
     def recurrence(self, request, **kwargs):
         pk = kwargs.get('pk', None)
         journey = get_object_or_404(Journey, pk=pk)
-        queryset = journey.recurrence_journeys()
+        queryset = journey.brothers()
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
