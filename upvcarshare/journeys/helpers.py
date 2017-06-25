@@ -6,6 +6,7 @@ from copy import copy
 
 from django.contrib.gis.gdal import SpatialReference, CoordTransform
 from django.utils import timezone
+from django.utils.timezone import make_aware
 
 from journeys import DEFAULT_PROJECTED_SRID, DEFAULT_WGS84_SRID
 
@@ -48,36 +49,22 @@ def last_day_current_week():
     return first_day_current_week() + datetime.timedelta(days=7)
 
 
-def expand(journey):
-    """Expands given journey using recurrence field to create new journeys."""
-    from journeys.models import Journey
-
-    # Finish date is 1 of september, new course
-    today = journey.departure
+def default_until(today):
     finish_date = today.replace(day=1, month=9)
     if today.month >= 9:
         finish_date = finish_date.replace(year=finish_date.year + 1)
+    return finish_date
+
+
+def expand(journey_template):
+    """Expands given journey using recurrence field to create new journeys."""
+    recurrence_dates = journey_template.recurrence_dates()
     journeys = []
-    if journey.recurrence:
-        datetime_start = journey.departure + datetime.timedelta(days=1)
-        datetime_end = datetime.datetime.combine(finish_date, time=datetime.time(0, 0, 0, 0))
-        if journey.recurrence.dtend:
-            datetime_end = min(journey.recurrence.dtend, datetime_end)
-        for date in journey.recurrence.occurrences(dtstart=datetime_start, dtend=datetime_end):
-            new_journey = Journey.objects.get(pk=journey.pk)
-            new_journey.pk = None
-            new_journey.update_modified = True  # TODO I dot know why this is needed, sorry :(
-            new_journey.parent = journey
-            new_journey.departure = date.replace(
-                hour=new_journey.departure.hour,
-                minute=new_journey.departure.minute,
-                tzinfo=new_journey.departure.tzinfo
+    for dates in recurrence_dates:
+        journeys.append(
+            journey_template.create_journey(
+                departure=dates[0],
+                arrival=dates[1]
             )
-            if new_journey.arrival:
-                new_journey.arrival = date.replace(
-                    hour=new_journey.arrival.hour,
-                    minute=new_journey.arrival.minute,
-                    tzinfo=new_journey.arrival.tzinfo
-                )
-            journeys.append(new_journey)
+        )
     return journeys

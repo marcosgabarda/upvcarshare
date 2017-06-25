@@ -10,8 +10,10 @@ from test_plus.test import TestCase
 
 from journeys import GOING, RETURN, DEFAULT_PROJECTED_SRID
 from journeys.exceptions import AlreadyAPassenger, NotAPassenger
-from journeys.models import Journey, Passenger, Residence
-from journeys.tests.factories import ResidenceFactory, CampusFactory, TransportFactory, JourneyFactory
+from journeys.helpers import expand
+from journeys.models import Journey, Passenger, Residence, JourneyTemplate
+from journeys.tests.factories import ResidenceFactory, CampusFactory, TransportFactory, JourneyFactory, \
+    JourneyTemplateFactory
 from users.tests.factories import UserFactory
 from users.tests.mocks import UPVLoginDataService
 
@@ -30,16 +32,19 @@ class JourneyTest(TestCase):
         user = UserFactory()
         origin = ResidenceFactory(user=user)
         destination = CampusFactory()
-        return JourneyFactory(user=user, residence=origin, campus=destination, kind=kind)
+        template = JourneyTemplateFactory(user=user, residence=origin, campus=destination, kind=kind)
+        return JourneyFactory(template=template)
 
     def test_smart_create_no_transport(self):
         """Test smart create of a journey without transport."""
         user = UserFactory()
         origin = ResidenceFactory(user=user)
         destination = CampusFactory()
-        journey = Journey.objects.smart_create(
+        template = JourneyTemplate.objects.smart_create(
             user=user, origin=origin, destination=destination, departure=timezone.now() + datetime.timedelta(days=1)
         )
+        journeys = expand(template)
+        journey = journeys[0]
         self.assertEquals(Journey.objects.count(), 1)
         self.assertEquals(Journey.objects.first(), journey)
 
@@ -49,10 +54,12 @@ class JourneyTest(TestCase):
         transport = TransportFactory(user=user)
         origin = ResidenceFactory(user=user)
         destination = CampusFactory()
-        journey = Journey.objects.smart_create(
+        template = JourneyTemplate.objects.smart_create(
             user=user, origin=origin, destination=destination, departure=timezone.now() + datetime.timedelta(days=1),
             transport=transport
         )
+        journeys = expand(template)
+        journey = journeys[0]
         self.assertEquals(Journey.objects.count(), 1)
         self.assertEquals(Journey.objects.first(), journey)
         self.assertEquals(journey.free_places, transport.default_places)
@@ -64,14 +71,16 @@ class JourneyTest(TestCase):
         user = UserFactory()
         origin = ResidenceFactory(user=user)
         destination = CampusFactory()
-        journey = JourneyFactory(user=user, residence=origin, campus=destination, kind=GOING)
+        template = JourneyTemplateFactory(user=user, residence=origin, campus=destination, kind=GOING)
+        journey = JourneyFactory(template=template)
         self.assertEquals(journey.origin, origin)
 
     def test_destination(self):
         user = UserFactory()
         origin = ResidenceFactory(user=user)
         destination = CampusFactory()
-        journey = JourneyFactory(user=user, residence=origin, campus=destination, kind=GOING)
+        template = JourneyTemplateFactory(user=user, residence=origin, campus=destination, kind=GOING)
+        journey = JourneyFactory(template=template)
         self.assertEquals(journey.destination, destination)
 
     def test_join_passenger(self):
@@ -131,12 +140,15 @@ class JourneyTest(TestCase):
         user2 = UserFactory()
         residence2 = ResidenceFactory(user=user2, position=Point(882823.07, 545542.48, srid=DEFAULT_PROJECTED_SRID))
         campus = CampusFactory()
-        JourneyFactory(user=user1, driver=user1, residence=residence1, campus=campus)
-        JourneyFactory(user=user2, driver=user2, residence=residence2, campus=campus)
+        template = JourneyTemplateFactory(user=user1, driver=user1, residence=residence1, campus=campus)
+        JourneyFactory(template=template)
+        template = JourneyTemplateFactory(user=user2, driver=user2, residence=residence2, campus=campus)
+        JourneyFactory(template=template)
         # Creates a journey without driver
         user3 = UserFactory()
         residence3 = ResidenceFactory(user=user3, position=Point(882454.58, 545877.33, srid=DEFAULT_PROJECTED_SRID))
-        JourneyFactory(user=user3, residence=residence3, campus=campus)
+        template = JourneyTemplateFactory(user=user3, residence=residence3, campus=campus)
+        JourneyFactory(template=template)
         self.assertEquals(Journey.objects.available(user=user3, kind=GOING).count(), 2)
 
     def test_available_return_query(self):
@@ -146,12 +158,15 @@ class JourneyTest(TestCase):
         user2 = UserFactory()
         residence2 = ResidenceFactory(user=user2, position=Point(882823.07, 545542.48, srid=DEFAULT_PROJECTED_SRID))
         campus = CampusFactory()
-        JourneyFactory(user=user1, driver=user1, residence=residence1, campus=campus, kind=RETURN)
-        JourneyFactory(user=user2, driver=user2, residence=residence2, campus=campus)
+        template = JourneyTemplateFactory(user=user1, driver=user1, residence=residence1, campus=campus, kind=RETURN)
+        JourneyFactory(template=template)
+        template = JourneyTemplateFactory(user=user2, driver=user2, residence=residence2, campus=campus)
+        JourneyFactory(template=template)
         # Creates a journey without driver
         user3 = UserFactory()
         residence3 = ResidenceFactory(user=user3, position=Point(865621.24, 545877.33, srid=DEFAULT_PROJECTED_SRID))
-        JourneyFactory(user=user3, residence=residence3, campus=campus, kind=RETURN)
+        template = JourneyTemplateFactory(user=user3, residence=residence3, campus=campus, kind=RETURN)
+        JourneyFactory(template=template)
         self.assertEquals(Journey.objects.available(user=user3, kind=RETURN).count(), 1)
 
     def test_available_query(self):
@@ -161,12 +176,15 @@ class JourneyTest(TestCase):
         user2 = UserFactory()
         residence2 = ResidenceFactory(user=user2, position=Point(882823.07, 545542.48, srid=DEFAULT_PROJECTED_SRID))
         campus = CampusFactory()
-        JourneyFactory(user=user1, driver=user1, residence=residence1, campus=campus, kind=RETURN)
-        JourneyFactory(user=user2, driver=user2, residence=residence2, campus=campus)
+        template = JourneyTemplateFactory(user=user1, driver=user1, residence=residence1, campus=campus, kind=RETURN)
+        JourneyFactory(template=template)
+        template = JourneyTemplateFactory(user=user2, driver=user2, residence=residence2, campus=campus)
+        JourneyFactory(template=template)
         # Creates a journey without driver
         user3 = UserFactory()
         residence3 = ResidenceFactory(user=user3, position=Point(865621.24, 545274.90, srid=DEFAULT_PROJECTED_SRID))
-        JourneyFactory(user=user3, residence=residence3, campus=campus, kind=RETURN)
+        template = JourneyTemplateFactory(user=user3, residence=residence3, campus=campus, kind=RETURN)
+        JourneyFactory(template=template)
         self.assertEquals(Journey.objects.available(user=user3).count(), 2)
 
     def test_nearby_query(self):
@@ -178,9 +196,12 @@ class JourneyTest(TestCase):
         campus = CampusFactory()
         user3 = UserFactory()
         residence3 = ResidenceFactory(user=user3, position=Point(865621.24, 545274.90, srid=DEFAULT_PROJECTED_SRID))
-        JourneyFactory(user=user1, driver=user1, residence=residence1, campus=campus)
-        JourneyFactory(user=user2, driver=user2, residence=residence2, campus=campus)
-        JourneyFactory(user=user3, driver=user3, residence=residence3, campus=campus)
+        template = JourneyTemplateFactory(user=user1, driver=user1, residence=residence1, campus=campus)
+        JourneyFactory(template=template)
+        template = JourneyTemplateFactory(user=user2, driver=user2, residence=residence2, campus=campus)
+        JourneyFactory(template=template)
+        template = JourneyTemplateFactory(user=user3, driver=user3, residence=residence3, campus=campus)
+        JourneyFactory(template=template)
         point = Point(882532.74, 545437.43, srid=DEFAULT_PROJECTED_SRID)
         self.assertEquals(Journey.objects.nearby(
             geometry=point,
@@ -196,9 +217,12 @@ class JourneyTest(TestCase):
         campus = CampusFactory()
         user3 = UserFactory()
         residence3 = ResidenceFactory(user=user3, position=Point(865621.24, 545274.90, srid=DEFAULT_PROJECTED_SRID))
-        JourneyFactory(user=user1, driver=user1, residence=residence1, campus=campus)
-        JourneyFactory(user=user2, driver=user2, residence=residence2, campus=campus)
-        JourneyFactory(user=user3, driver=user3, residence=residence3, campus=campus)
+        template = JourneyTemplateFactory(user=user1, driver=user1, residence=residence1, campus=campus)
+        JourneyFactory(template=template)
+        template = JourneyTemplateFactory(user=user2, driver=user2, residence=residence2, campus=campus)
+        JourneyFactory(template=template)
+        template = JourneyTemplateFactory(user=user3, driver=user3, residence=residence3, campus=campus)
+        JourneyFactory(template=template)
         point = Point(882532.74, 545437.43, srid=DEFAULT_PROJECTED_SRID)
         self.assertEquals(Journey.objects.nearby(
             geometry=point,
@@ -215,14 +239,18 @@ class JourneyTest(TestCase):
         campus = CampusFactory()
         user3 = UserFactory()
         residence3 = ResidenceFactory(user=user3, position=Point(865621.24, 545274.90, srid=DEFAULT_PROJECTED_SRID))
-        JourneyFactory(user=user1, driver=user1, residence=residence1, campus=campus)
-        JourneyFactory(user=user2, driver=user2, residence=residence2, campus=campus)
-        JourneyFactory(user=user3, driver=user3, residence=residence3, campus=campus)
+        template = JourneyTemplateFactory(user=user1, driver=user1, residence=residence1, campus=campus)
+        JourneyFactory(template=template)
+        template = JourneyTemplateFactory(user=user2, driver=user2, residence=residence2, campus=campus)
+        JourneyFactory(template=template)
+        template = JourneyTemplateFactory(user=user3, driver=user3, residence=residence3, campus=campus)
+        JourneyFactory(template=template)
         user4 = UserFactory()
         residence4 = ResidenceFactory(
             user=user4, position=Point(882532.74, 545437.43, srid=DEFAULT_PROJECTED_SRID), distance=2500
         )
-        JourneyFactory(user=user4, residence=residence4, campus=campus)
+        template = JourneyTemplateFactory(user=user4, residence=residence4, campus=campus)
+        JourneyFactory(template=template)
         self.assertEquals(Journey.objects.recommended(
             user=user4,
         ).count(), 2)
@@ -236,14 +264,18 @@ class JourneyTest(TestCase):
         campus = CampusFactory()
         user3 = UserFactory()
         residence3 = ResidenceFactory(user=user3, position=Point(865621.24, 545274.90, srid=DEFAULT_PROJECTED_SRID))
-        JourneyFactory(user=user1, driver=user1, residence=residence1, campus=campus)
-        JourneyFactory(user=user2, driver=user2, residence=residence2, campus=campus)
-        JourneyFactory(user=user3, driver=user3, residence=residence3, campus=campus)
+        template = JourneyTemplateFactory(user=user1, driver=user1, residence=residence1, campus=campus)
+        JourneyFactory(template=template)
+        template = JourneyTemplateFactory(user=user2, driver=user2, residence=residence2, campus=campus)
+        JourneyFactory(template=template)
+        template = JourneyTemplateFactory(user=user3, driver=user3, residence=residence3, campus=campus)
+        JourneyFactory(template=template)
         user4 = UserFactory()
         residence4 = ResidenceFactory(
             user=user4, position=Point(882532.74, 545437.43, srid=DEFAULT_PROJECTED_SRID), distance=2500
         )
-        JourneyFactory(user=user4, residence=residence4, campus=campus)
+        template = JourneyTemplateFactory(user=user4, residence=residence4, campus=campus)
+        JourneyFactory(template=template)
         self.assertEquals(Journey.objects.recommended(
             user=user4,
             kind=GOING

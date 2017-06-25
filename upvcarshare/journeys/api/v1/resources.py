@@ -77,7 +77,7 @@ class JourneyResource(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super(JourneyResource, self).get_queryset()
         if self.request.query_params.get('owned'):
-            queryset = queryset.filter(user=self.request.user)
+            queryset = queryset.filter(template__user=self.request.user)
         if self.request.query_params.get('joined'):
             queryset = queryset.filter(passengers__user=self.request.user)
         return queryset
@@ -200,7 +200,7 @@ class RecommendedJourneysResource(viewsets.ReadOnlyModelViewSet):
         }
         pk = kwargs.get('pk', None)
         if pk is not None:
-            journey = get_object_or_404(Journey, pk=pk, user=request.user)
+            journey = get_object_or_404(Journey, pk=pk, template__user=request.user)
             args["journey"] = journey
         queryset = Journey.objects.recommended(**args)
         page = self.paginate_queryset(queryset)
@@ -231,7 +231,7 @@ class RecurrenceJourneysResource(viewsets.ReadOnlyModelViewSet):
     def recurrence(self, request, **kwargs):
         pk = kwargs.get('pk', None)
         journey = get_object_or_404(Journey, pk=pk)
-        queryset = journey.recurrence_journeys()
+        queryset = journey.brothers()
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
@@ -256,7 +256,7 @@ class CancelJourneyResource(viewsets.ViewSet):
     @staticmethod
     def cancel(request, **kwargs):
         pk = kwargs.get('pk', 0)
-        journey = get_object_or_404(Journey, pk=pk, user=request.user)
+        journey = get_object_or_404(Journey, pk=pk, template__user=request.user)
         journey.cancel()
         return Response(status=status.HTTP_201_CREATED)
 

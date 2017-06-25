@@ -4,7 +4,7 @@ from __future__ import unicode_literals, print_function, absolute_import
 from test_plus import TestCase
 
 from journeys import GOING
-from journeys.tests.factories import CampusFactory
+from journeys.tests.factories import CampusFactory, JourneyTemplateFactory
 from journeys.tests.factories import ResidenceFactory, JourneyFactory
 from notifications import JOIN, LEAVE
 from notifications.models import Notification
@@ -25,7 +25,8 @@ class NotificationTests(TestCase):
         user = UserFactory() if user is None else user
         origin = ResidenceFactory(user=user)
         destination = CampusFactory()
-        return JourneyFactory(user=user, residence=origin, campus=destination, kind=kind)
+        template = JourneyTemplateFactory(user=user, residence=origin, campus=destination, kind=kind)
+        return JourneyFactory(template=template)
 
     def test_join_generation(self):
         initial_user = UserFactory()

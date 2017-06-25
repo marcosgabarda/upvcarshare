@@ -38,7 +38,7 @@ class CreateTransportView(LoginRequiredMixin, View):
         if form.is_valid():
             form.save(user=request.user)
             messages.success(request, _('Has creado el transporte correctamente'))
-            return redirect("journeys:transports")
+            return redirect(request.GET.get("next", "journeys:transports"))
         data = {"form": form}
         return render(request, self.template_name, data)
 

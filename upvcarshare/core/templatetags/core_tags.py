@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals, print_function, absolute_import
 
+import pytz
+import six
+from dateutil.parser import parse
 from django import template
 from django.conf import settings
 from django.http import QueryDict
+from django.template.defaultfilters import date
+from django.utils import timezone
+from django.utils.timezone import make_aware
 
 from journeys import DEFAULT_GOOGLE_MAPS_SRID
 from journeys.helpers import make_point
@@ -33,3 +39,10 @@ def add_active_class(context, names, _class="active"):
     request = context["request"]
     names = names.split(",")
     return _class if request.resolver_match.view_name in names else ""
+
+
+@register.filter(expects_localtime=True, is_safe=False)
+def smart_date(value):
+    if isinstance(value, six.text_type):
+        value = parse(value, dayfirst=True, ignoretz=True)
+    return value

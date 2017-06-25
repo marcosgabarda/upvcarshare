@@ -21,13 +21,24 @@ const JourneyForm = () => ({
   link: (scope, element, attr) => {
     scope.iAmDriver = "False";
     scope.newArrivalValue = null;
+    scope.newDepartureValue = null;
 
     scope.onUpdateDeparture = (value) => {
-      // console.log("Updated departure: ", value);
-      var newValue = moment(value).add(30, 'm');
+      scope.newDepartureValue = value;
+      let newValue = moment(value).add(30, 'm');
       scope.newArrivalValue = newValue.toDate();
     };
 
+  }
+});
+
+const ResidenceForm = () => ({
+  restrict: 'A',
+  link: (scope, element, attr) => {
+    scope.address = "";
+    scope.onUpdateAddress = (value) => {
+      scope.address = value;
+    }
   }
 });
 
@@ -142,4 +153,4 @@ RejectPassengerForm.$inject = ["$uibModal"];
 
 
 export {JourneyForm, JoinJourneyForm, SearchJourneyForm, ConfirmPassengerForm,
-  RejectPassengerForm};
+  RejectPassengerForm, ResidenceForm};

@@ -67,7 +67,7 @@ class Notification(TimeStampedModel):
             target_date = localize(target_date)
             if self.verb == JOIN:
                 # actor is a user and target is a journey
-                value = _("%(user)s se ha <strong>unido</strong> al viaje <strong>%(journey)s</strong> del %(date)s") % {
+                value = _("%(user)s ha <strong>solicitado</strong> unirse al viaje <strong>%(journey)s</strong> del %(date)s") % {
                     "user": six.text_type(self.actor),
                     "journey": six.text_type(self.target).lower(),
                     "date": target_date,

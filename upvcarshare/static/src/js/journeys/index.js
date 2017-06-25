@@ -1,8 +1,23 @@
 import angular from 'angular';
 import JourneyService from './journeys.service';
-import {OriginDestinationSelectComponent, DatetimeComponent, DateComponent, TimeComponent, CalendarComponent, CircleMapComponent, RecurrenceCalendarComponent} from './journeys.component';
-import {JourneyForm, JoinJourneyForm, SearchJourneyForm, ConfirmPassengerForm,
-  RejectPassengerForm} from './journey.directive';
+import {
+  OriginDestinationSelectComponent,
+  DatetimeComponent,
+  DateComponent,
+  TimeComponent,
+  CalendarComponent,
+  CircleMapComponent,
+  RecurrenceCalendarComponent
+} from './journeys.component';
+import RRulesComponent from './components/rrules';
+import {
+  JourneyForm,
+  JoinJourneyForm,
+  SearchJourneyForm,
+  ConfirmPassengerForm,
+  RejectPassengerForm,
+  ResidenceForm
+} from './journey.directive';
 import JoinAllOneController from './journeys.controller';
 
 import 'lodash';
@@ -33,8 +48,10 @@ const journeys = angular
   .component('calendar', CalendarComponent)
   .component('circleMap', CircleMapComponent)
   .component('recurrenceCalendar', RecurrenceCalendarComponent)
+  .component('rRules', RRulesComponent)
 
   .directive('journeyForm', JourneyForm)
+  .directive('residenceForm', ResidenceForm)
   .directive('searchJourneyForm', SearchJourneyForm)
   .directive('joinJourneyForm', JoinJourneyForm)
   .directive('confirmPassengerForm', ConfirmPassengerForm)

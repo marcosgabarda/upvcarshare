@@ -10,7 +10,8 @@ from rest_framework.test import APITestCase
 
 from journeys import GOING, RETURN, DEFAULT_PROJECTED_SRID
 from journeys.models import Transport, Journey
-from journeys.tests.factories import TransportFactory, ResidenceFactory, CampusFactory, JourneyFactory, MessageFactory
+from journeys.tests.factories import TransportFactory, ResidenceFactory, CampusFactory, JourneyFactory, MessageFactory, \
+    JourneyTemplateFactory
 from users.tests.factories import UserFactory
 from users.tests.mocks import UPVLoginDataService
 
@@ -85,7 +86,8 @@ class JourneyAPITest(APITestCase):
         user = UserFactory()
         origin = ResidenceFactory(user=user)
         destination = CampusFactory()
-        return JourneyFactory(user=user, residence=origin, campus=destination, kind=kind)
+        template = JourneyTemplateFactory(user=user, residence=origin, campus=destination, kind=kind)
+        return JourneyFactory(template=template, departure=template.departure, arrival=template.arrival)
 
     def test_get_journeys(self):
         user = UserFactory()
@@ -177,14 +179,18 @@ class JourneyAPITest(APITestCase):
         campus = CampusFactory()
         user3 = UserFactory()
         residence3 = ResidenceFactory(user=user3, position=Point(865621.24, 545274.90, srid=DEFAULT_PROJECTED_SRID))
-        JourneyFactory(user=user1, driver=user1, residence=residence1, campus=campus)
-        JourneyFactory(user=user2, driver=user2, residence=residence2, campus=campus)
-        JourneyFactory(user=user3, driver=user3, residence=residence3, campus=campus)
+        template = JourneyTemplateFactory(user=user1, driver=user1, residence=residence1, campus=campus)
+        JourneyFactory(template=template)
+        template = JourneyTemplateFactory(user=user2, driver=user2, residence=residence2, campus=campus)
+        JourneyFactory(template=template)
+        template = JourneyTemplateFactory(user=user3, driver=user3, residence=residence3, campus=campus)
+        JourneyFactory(template=template)
         user4 = UserFactory()
         residence4 = ResidenceFactory(
             user=user4, position=Point(882532.74, 545437.43, srid=DEFAULT_PROJECTED_SRID), distance=2500
         )
-        JourneyFactory(user=user4, residence=residence4, campus=campus)
+        template = JourneyTemplateFactory(user=user4, residence=residence4, campus=campus)
+        JourneyFactory(template=template)
         # Make query...
         url = "/api/v1/journeys/recommended/"
         self.client.force_authenticate(user=user4)
@@ -202,14 +208,18 @@ class JourneyAPITest(APITestCase):
         campus = CampusFactory()
         user3 = UserFactory()
         residence3 = ResidenceFactory(user=user3, position=Point(865621.24, 545274.90, srid=DEFAULT_PROJECTED_SRID))
-        JourneyFactory(user=user1, driver=user1, residence=residence1, campus=campus)
-        JourneyFactory(user=user2, driver=user2, residence=residence2, campus=campus)
-        JourneyFactory(user=user3, driver=user3, residence=residence3, campus=campus)
+        template = JourneyTemplateFactory(user=user1, driver=user1, residence=residence1, campus=campus)
+        JourneyFactory(template=template)
+        template = JourneyTemplateFactory(user=user2, driver=user2, residence=residence2, campus=campus)
+        JourneyFactory(template=template)
+        template = JourneyTemplateFactory(user=user3, driver=user3, residence=residence3, campus=campus)
+        JourneyFactory(template=template)
         user4 = UserFactory()
         residence4 = ResidenceFactory(
             user=user4, position=Point(882532.74, 545437.43, srid=DEFAULT_PROJECTED_SRID), distance=2500
         )
-        journey = JourneyFactory(user=user4, residence=residence4, campus=campus)
+        template = JourneyTemplateFactory(user=user4, residence=residence4, campus=campus)
+        journey = JourneyFactory(template=template)
         # Make query...
         url = "/api/v1/journeys/{}/recommended/".format(journey.pk)
         self.client.force_authenticate(user=user4)
@@ -226,10 +236,11 @@ class MessageAPITest(APITestCase):
         user = UserFactory()
         origin = ResidenceFactory(user=user)
         destination = CampusFactory()
-        journey = JourneyFactory(user=user, residence=origin, campus=destination)
+        template = JourneyTemplateFactory(user=user, residence=origin, campus=destination)
+        journey = JourneyFactory(template=template)
         [MessageFactory(
             user=UserFactory(),
-            journey=JourneyFactory(user=UserFactory(), residence=origin, campus=destination))
+            journey=JourneyFactory(template=JourneyTemplateFactory(user=UserFactory(), residence=origin, campus=destination)))
          for _ in range(2)]
         [MessageFactory(user=user, journey=journey) for _ in range(5)]
         [MessageFactory(user=UserFactory(), journey=journey) for _ in range(5)]
@@ -244,7 +255,8 @@ class MessageAPITest(APITestCase):
         user = UserFactory()
         origin = ResidenceFactory(user=user)
         destination = CampusFactory()
-        journey = JourneyFactory(user=user, residence=origin, campus=destination)
+        template = JourneyTemplateFactory(user=user, residence=origin, campus=destination)
+        journey = JourneyFactory(template=template)
         [MessageFactory(user=user, journey=journey) for _ in range(5)]
         [MessageFactory(user=UserFactory(), journey=journey) for _ in range(5)]
         url = "/api/v1/journeys/{}/messages/".format(journey.pk)
@@ -258,7 +270,8 @@ class MessageAPITest(APITestCase):
         user = UserFactory()
         origin = ResidenceFactory(user=user)
         destination = CampusFactory()
-        journey = JourneyFactory(user=user, residence=origin, campus=destination)
+        template = JourneyTemplateFactory(user=user, residence=origin, campus=destination)
+        journey = JourneyFactory(template=template)
         self.assertEquals(0, journey.messages.count())
         data = {
             "content": "Hello!",
@@ -274,9 +287,12 @@ class MessageAPITest(APITestCase):
         user = UserFactory()
         origin = ResidenceFactory(user=user)
         destination = CampusFactory()
-        journey1 = JourneyFactory(user=user, residence=origin, campus=destination)
-        journey2 = JourneyFactory(user=user, residence=origin, campus=destination)
-        journey3 = JourneyFactory(user=UserFactory(), residence=origin, campus=destination)
+        template = JourneyTemplateFactory(user=user, residence=origin, campus=destination)
+        journey1 = JourneyFactory(template=template)
+        template = JourneyTemplateFactory(user=user, residence=origin, campus=destination)
+        journey2 = JourneyFactory(template=template)
+        template = JourneyTemplateFactory(user=UserFactory(), residence=origin, campus=destination)
+        journey3 = JourneyFactory(template=template)
         [MessageFactory(user=user, journey=journey1) for _ in range(2)]
         [MessageFactory(user=UserFactory(), journey=journey1) for _ in range(2)]
         [MessageFactory(user=user, journey=journey2) for _ in range(2)]

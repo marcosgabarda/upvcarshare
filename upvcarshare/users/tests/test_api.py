@@ -42,7 +42,7 @@ class UsersAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         user = User.objects.get(pk=user.pk)
         self.assertEquals(
-            "SRID=4326;POINT (-0.3767699999989411 39.46913999999702)",
+            "SRID=4326;POINT (-0.3767699999999994 39.4691399999998)",
             six.text_type(user.get_default_position_wgs84())
         )
         self.assertEquals("foo", user.default_address)

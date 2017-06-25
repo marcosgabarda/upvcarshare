@@ -94,7 +94,7 @@ class DatetimeController {
   }
 
   $onInit() {
-    var date = this.value !== undefined ? moment(this.value).toDate() : new Date();
+    const date = this.value !== undefined ? moment(this.value).toDate() : new Date();
     this.picker = {
       date: date,
       open: false,
@@ -135,11 +135,13 @@ class DatetimeController {
     // Call to onUpdate when $ctrl.picker.date changes.
     this.scope.$watch('$ctrl.picker.date', (previousValue, currentValue) => {
       // console.log("Watcher:", previousValue, currentValue)
-      if (currentValue !== undefined && previousValue !== currentValue) {
-        this.onUpdate({"value": currentValue});
-      }
-      if (currentValue == undefined && previousValue !== undefined) {
-        this.onUpdate({"value": previousValue});
+      if (this.master) {
+        if (currentValue !== undefined && previousValue !== currentValue) {
+          this.onUpdate({"value": currentValue});
+        }
+        if (currentValue == undefined && previousValue !== undefined) {
+          this.onUpdate({"value": previousValue});
+        }
       }
     });
   }
@@ -357,8 +359,8 @@ class CircleMapController {
   }
 
   getInitialCenter() {
-    var re = /POINT \(([0-9\-\.]+) ([0-9\-\.]+)\)/;
-    var values = this.positionValue.match(re);
+    const re = /POINT \(([0-9\-\.]+) ([0-9\-\.]+)\)/;
+    const values = this.positionValue.match(re);
     if (values.length == 3) {
       return {
         latitude: parseFloat(values[2]),
@@ -425,7 +427,7 @@ class CircleMapController {
       control: {},
       events: {
         center_changed: () => {
-          var value = this.circle.center;
+          const value = this.circle.center;
           this.pointString = this.positionObjectToGis(value.latitude, value.longitude);
         }
       }
@@ -435,14 +437,17 @@ class CircleMapController {
       template: 'searchbox.tpl.html',
       events: {
         places_changed: (searchBox) => {
-          var places = searchBox.getPlaces(),
-              place = {};
+          const places = searchBox.getPlaces();
+          let place = {};
           if (places.length > 0) {
             place = places[0];
             this.changeCenter(
               place.geometry.location.lat(),
               place.geometry.location.lng()
             );
+            if (this.onUpdate !== undefined) {
+              this.onUpdate({value: place.formatted_address})
+            }
           }
         }
       }
