@@ -2,6 +2,8 @@
 from __future__ import unicode_literals, print_function, absolute_import
 
 from copy import copy
+from dateutil.rrule import rrulestr
+from django.utils.timezone import make_aware
 from functools import reduce
 import datetime
 
@@ -21,8 +23,8 @@ from core.models import GisTimeStampedModel
 from journeys import JOURNEY_KINDS, GOING, RETURN, DEFAULT_DISTANCE, DEFAULT_PROJECTED_SRID, DEFAULT_WGS84_SRID, \
     DEFAULT_TIME_WINDOW, PASSENGER_STATUSES, UNKNOWN, CONFIRMED, REJECTED, DEFAULT_GOOGLE_MAPS_SRID
 from journeys.exceptions import NoFreePlaces, NotAPassenger, AlreadyAPassenger
-from journeys.helpers import make_point_wgs84, make_point
-from journeys.managers import JourneyManager, ResidenceManager, MessageManager
+from journeys.helpers import make_point_wgs84, make_point, default_until
+from journeys.managers import JourneyManager, ResidenceManager, MessageManager, JourneyTemplateManager
 from notifications import JOIN, LEAVE, CANCEL, CONFIRM, REJECT, THROW_OUT
 from notifications.decorators import dispatch
 
@@ -144,7 +146,13 @@ class JourneyTemplate(GisTimeStampedModel):
     )
 
     # Data about recurrence
-    recurrence = RecurrenceField(verbose_name=_("¿Vas a realizar este viaje más de una vez?"), null=True, blank=True)
+    departure = models.DateTimeField(verbose_name=_("Cuándo voy a realizar el viaje*"), null=True)
+    arrival = models.DateTimeField(verbose_name=_("Cuándo creo que voy a llegar*"), null=True, blank=True)
+    recurrence = models.TextField(
+        verbose_name=_("¿Vas a realizar este viaje más de una vez?"),
+        null=True,
+        blank=True
+    )
 
     # Kind of the journey
     kind = models.PositiveIntegerField(choices=JOURNEY_KINDS, verbose_name=_("tipo de viaje"))
@@ -158,17 +166,37 @@ class JourneyTemplate(GisTimeStampedModel):
         blank=True
     )
 
+    objects = JourneyTemplateManager()
+
+    def has_recurrence(self):
+        return self.recurrence is not None and self.recurrence != ""
+
     def create_journey(self, departure, arrival):
         """Creates a Journey using the template and the data given."""
-        journey = Journey(
-            template=self,
-            departure=departure,
-            arrival=arrival,
-            free_places=self.transport.default_places,
-            total_passengers=0,
-        )
+        attributes = {
+            "template": self,
+            "departure": departure,
+            "arrival": arrival,
+        }
+        if self.driver is not None:
+            attributes["free_places"] = self.transport.default_places if self.transport is not None else 4
+            attributes["total_passengers"] = 0
+        journey = Journey(**attributes)
         journey.save()
         return journey
+
+    def recurrence_dates(self):
+        """Returns a list of (departure, arrival) datetimes, to create the list of
+        journeys.
+        """
+        if self.has_recurrence():
+            interval = self.arrival - self.departure
+            rules = rrulestr(self.recurrence, dtstart=self.departure)
+            if rules._until is None:
+                rules._until = default_until(self.departure)
+            dates = list(map(lambda d: make_aware(d), list(rules)))
+            return zip(dates, map(lambda d: d + interval, dates))
+        return [(self.departure, self.arrival)]
 
     def save(self, **kwargs):
         """Override save to set the default time window value. Default value not set in Oracle."""
@@ -182,7 +210,7 @@ class Journey(GisTimeStampedModel):
     """A model class to represent a journey between two node."""
 
     # Reference to the template
-    template = models.ForeignKey("journeys.JourneyTemplate", related_name="journeys")
+    template = models.ForeignKey("journeys.JourneyTemplate", related_name="journeys", null=True)
 
     # Data about places and passengers
     free_places = models.PositiveIntegerField(default=4, verbose_name=_("plazas libres"), blank=True, null=True)
@@ -229,6 +257,10 @@ class Journey(GisTimeStampedModel):
     @property
     def driver(self):
         return self.template.driver
+
+    @property
+    def kind(self):
+        return self.template.kind
 
     def __str__(self):
         return self.description(strip_html=True)
@@ -287,7 +319,7 @@ class Journey(GisTimeStampedModel):
         """
         # Join only one
         if join_to is None or join_to == "one":
-            if self.passengers.filter(user=user).exists() or self.driver == user:
+            if self.passengers.filter(user=user).exists() or self.template.driver == user:
                 raise AlreadyAPassenger()
             if self.count_passengers() < self.free_places:
                 passenger = Passenger.objects.create(
@@ -351,7 +383,7 @@ class Journey(GisTimeStampedModel):
         # self.passengers.filter(user=user).update(status=CONFIRMED)
         passenger = self.passengers.filter(user=user).first()
         if passenger:
-            passengers = passenger.recurrence()
+            passengers = passenger.brothers()
             passengers.update(status=CONFIRMED)
             self.total_passengers += 1
             self.save()
@@ -364,7 +396,7 @@ class Journey(GisTimeStampedModel):
         # self.passengers.filter(user=user).update(status=REJECTED)
         passenger = self.passengers.filter(user=user).first()
         if passenger:
-            passengers = passenger.recurrence()
+            passengers = passenger.brothers()
             passengers.update(status=REJECTED)
 
     def is_passenger(self, user, all_passengers=False):
@@ -422,6 +454,13 @@ class Journey(GisTimeStampedModel):
         elif self.is_passenger(user):
             return self.passengers.filter(status=CONFIRMED)
         return Passenger.objects.none()
+
+    def save(self, **kwargs):
+        if self.template is not None and self.departure is None:
+            self.departure = self.template.departure
+        if self.template is not None and self.arrival is None:
+            self.arrival = self.template.arrival
+        super(Journey, self).save(**kwargs)
 
 
 class Passenger(TimeStampedModel):

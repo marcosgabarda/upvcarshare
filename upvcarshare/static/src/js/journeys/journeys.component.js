@@ -1,6 +1,13 @@
 // Component for select origin and destination of a journey.
-import {OriginDestinationSelectController, DatetimeController, DateController, TimeController, CalendarController, CircleMapController, RecurrenceCalendarController}
-  from './journeys.controller';
+import {
+  OriginDestinationSelectController,
+  DatetimeController,
+  DateController,
+  TimeController,
+  CalendarController,
+  CircleMapController,
+  RecurrenceCalendarController
+} from './journeys.controller';
 
 
 const OriginDestinationSelectComponent = {

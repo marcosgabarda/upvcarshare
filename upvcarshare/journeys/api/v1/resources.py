@@ -200,7 +200,7 @@ class RecommendedJourneysResource(viewsets.ReadOnlyModelViewSet):
         }
         pk = kwargs.get('pk', None)
         if pk is not None:
-            journey = get_object_or_404(Journey, pk=pk, user=request.user)
+            journey = get_object_or_404(Journey, pk=pk, template__user=request.user)
             args["journey"] = journey
         queryset = Journey.objects.recommended(**args)
         page = self.paginate_queryset(queryset)
@@ -256,7 +256,7 @@ class CancelJourneyResource(viewsets.ViewSet):
     @staticmethod
     def cancel(request, **kwargs):
         pk = kwargs.get('pk', 0)
-        journey = get_object_or_404(Journey, pk=pk, user=request.user)
+        journey = get_object_or_404(Journey, pk=pk, template__user=request.user)
         journey.cancel()
         return Response(status=status.HTTP_201_CREATED)
 

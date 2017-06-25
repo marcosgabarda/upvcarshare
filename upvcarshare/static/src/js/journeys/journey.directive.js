@@ -21,10 +21,11 @@ const JourneyForm = () => ({
   link: (scope, element, attr) => {
     scope.iAmDriver = "False";
     scope.newArrivalValue = null;
+    scope.newDepartureValue = null;
 
     scope.onUpdateDeparture = (value) => {
-      // console.log("Updated departure: ", value);
-      var newValue = moment(value).add(30, 'm');
+      scope.newDepartureValue = value;
+      let newValue = moment(value).add(30, 'm');
       scope.newArrivalValue = newValue.toDate();
     };
 

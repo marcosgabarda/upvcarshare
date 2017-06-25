@@ -5,17 +5,19 @@ import datetime
 
 import floppyforms
 import pytz
+import re
+from dateutil.rrule import rrulestr
 from django import forms
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
 from django.utils.timezone import make_aware
 from django.utils.translation import ugettext_lazy as _
-from django.utils import timezone
 
 from journeys import JOURNEY_KINDS, GOING, RETURN, DEFAULT_GOOGLE_MAPS_SRID, \
     DEFAULT_PROJECTED_SRID, DEFAULT_WGS84_SRID
 from journeys.helpers import expand, make_point
-from journeys.models import Residence, Journey, Campus, Transport
+from journeys.models import Residence, Journey, Campus, Transport, JourneyTemplate
 from users.models import User
 
 
@@ -73,29 +75,20 @@ class JourneyForm(forms.ModelForm):
 
     class Meta:
         model = Journey
-        fields = ["residence", "campus", "kind", "i_am_driver", "transport", "free_places", "departure", "time_window",
-                  "arrival", "recurrence"]
+        fields = ["free_places", "departure", "arrival"]
         widgets = {
-            "transport": forms.Select(attrs={"class": "form-control"}),
-            "residence": forms.Select(attrs={"class": "form-control"}),
-            "campus": forms.Select(attrs={"class": "form-control"}),
-            "kind": forms.Select(attrs={"class": "form-control"}),
             "free_places": forms.NumberInput(attrs={"class": "form-control"}),
             "departure": floppyforms.DateTimeInput(attrs={"class": "form-control"}),
             "arrival": floppyforms.DateTimeInput(attrs={"class": "form-control"}),
-            "time_window": forms.NumberInput(attrs={"class": "form-control"}),
         }
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user")
         super(JourneyForm, self).__init__(*args, **kwargs)
-        if self.user:
-            self.fields['residence'].queryset = Residence.objects.filter(user=self.user)
-            self.fields['transport'].queryset = Transport.objects.filter(user=self.user)
 
     def clean_free_places(self):
         free_places = self.cleaned_data["free_places"]
-        transport = self.cleaned_data["transport"]
+        transport = self.instance.template.transport if self.instance is not None else None
         if transport is not None and free_places > transport.default_places:
             raise forms.ValidationError(_("No puedes ofertar más plazas que las que tienes en el transporte"))
         return free_places
@@ -124,21 +117,8 @@ class JourneyForm(forms.ModelForm):
                 raise forms.ValidationError(_("No puedes crear viajes que llegues antes de salir"))
         return arrival
 
-    def save(self, commit=True, **kwargs):
-        """When save a journey form, you have to provide an user."""
-        user = self.user
-        if "user" in kwargs:
-            assert isinstance(kwargs["user"], User)
-            user = kwargs.get("user")
-        journey = super(JourneyForm, self).save(commit=False)
-        journey.user = user
-        journey.driver = user if self.cleaned_data["i_am_driver"] else None
-        if commit:
-            journey.save()
-        return journey
 
-
-class SmartJourneyForm(forms.ModelForm):
+class SmartJourneyTemplateForm(forms.ModelForm):
 
     origin = forms.CharField(widget=forms.HiddenInput())
     destiny = forms.CharField(widget=forms.HiddenInput())
@@ -156,11 +136,16 @@ class SmartJourneyForm(forms.ModelForm):
         )
     )
 
+    free_places = forms.IntegerField(
+        label=_("Cuántas plazas libres tengo"),
+        required=False,
+        widget=forms.NumberInput(attrs={"class": "form-control"})
+    )
+
     class Meta:
-        model = Journey
+        model = JourneyTemplate
         fields = ["origin", "destiny", "i_am_driver", "transport",
-                  "free_places", "departure", "arrival", "time_window",
-                  "recurrence"]
+                  "free_places", "departure", "recurrence", "arrival", "time_window"]
         widgets = {
             "transport": forms.Select(attrs={"class": "form-control"}),
             "kind": forms.Select(attrs={"class": "form-control"}),
@@ -172,11 +157,12 @@ class SmartJourneyForm(forms.ModelForm):
                 attrs={"class": "form-control"}
                 ),
             "time_window": forms.NumberInput(attrs={"class": "form-control"}),
+            "recurrence": forms.HiddenInput()
         }
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user")
-        super(SmartJourneyForm, self).__init__(*args, **kwargs)
+        super(SmartJourneyTemplateForm, self).__init__(*args, **kwargs)
         if self.user:
             self.fields['transport'].queryset = Transport.objects.filter(
                 user=self.user
@@ -229,15 +215,20 @@ class SmartJourneyForm(forms.ModelForm):
             raise forms.ValidationError(_("No puedes ofertar más plazas que las que tienes en el transporte"))
         return free_places
 
+    def clean_recurrence(self):
+        """Delete DTSTART from recurrence, we use departure field."""
+        recurrence = self.cleaned_data["recurrence"]
+        return re.sub(r"DTSTART=.+;", "", recurrence)
+
     def save(self, commit=True, **kwargs):
         """When save a journey form, you have to provide an user."""
         user = self.user
         if "user" in kwargs:
             assert isinstance(kwargs["user"], User)
             user = kwargs.get("user")
-        journey = super(SmartJourneyForm, self).save(commit=False)
-        journey.user = user
-        journey.driver = user if self.cleaned_data["i_am_driver"] else None
+        journey_template = super(SmartJourneyTemplateForm, self).save(commit=False)
+        journey_template.user = user
+        journey_template.driver = user if self.cleaned_data["i_am_driver"] else None
         # Smart origin, destiny and kind
         origin = self.cleaned_data["origin"]
         destiny = self.cleaned_data["destiny"]
@@ -246,16 +237,15 @@ class SmartJourneyForm(forms.ModelForm):
             Campus: "campus",
         }
         attribute = attribute_selector[origin.__class__]
-        setattr(journey, attribute, origin)
+        setattr(journey_template, attribute, origin)
         attribute = attribute_selector[destiny.__class__]
-        setattr(journey, attribute, destiny)
-        journey.kind = GOING if isinstance(origin, Residence) else RETURN
+        setattr(journey_template, attribute, destiny)
+        journey_template.kind = GOING if isinstance(origin, Residence) else RETURN
         if commit:
-            journey.save()
+            journey_template.save()
             # Expand journey recurrence
-            journeys = expand(journey)
-            Journey.objects.bulk_create(journeys)
-        return journey
+            expand(journey_template)
+        return journey_template
 
 
 class FilterForm(forms.Form):
@@ -384,7 +374,7 @@ class SearchJourneyForm(forms.Form):
         distance = self.cleaned_data["distance"]
         departure_date = self.cleaned_data["departure_date"]
         departure_time = self.cleaned_data["departure_time"]
-        departure = datetime.datetime.combine(departure_date, departure_time)
+        departure = make_aware(datetime.datetime.combine(departure_date, departure_time))
         search_by_time = self.cleaned_data.get("search_by_time", False)
         time_window = self.cleaned_data["time_window"]
         return Journey.objects.search(

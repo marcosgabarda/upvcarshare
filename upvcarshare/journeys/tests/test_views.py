@@ -8,7 +8,7 @@ from test_plus import TestCase
 
 from journeys import GOING, RETURN
 from journeys.models import Journey, Residence, Passenger
-from journeys.tests.factories import JourneyFactory, ResidenceFactory, CampusFactory
+from journeys.tests.factories import JourneyFactory, ResidenceFactory, CampusFactory, JourneyTemplateFactory
 from users.tests.factories import UserFactory
 from users.tests.mocks import UPVLoginDataService
 
@@ -99,7 +99,7 @@ class JourneyViewTests(TestCase):
 
     def test_get_edit_journey(self):
         user = self.make_user(username="foo")
-        journey = JourneyFactory(user=user)
+        journey = JourneyFactory(template=JourneyTemplateFactory(user=user))
         url_name = "journeys:edit"
         self.assertLoginRequired(url_name, pk=journey.pk)
         with self.login(user):
@@ -108,23 +108,24 @@ class JourneyViewTests(TestCase):
 
     def test_post_edit_journey(self):
         user = self.make_user(username="foo")
-        journey = JourneyFactory(user=user, kind=GOING)
+        template = JourneyTemplateFactory(user=user, kind=GOING)
+        journey = JourneyFactory(template=template)
         url_name = "journeys:edit"
         self.assertLoginRequired(url_name, pk=journey.pk)
         with self.login(user):
             data = {
-                "residence": ResidenceFactory(user=user).pk,
-                "campus": CampusFactory().pk,
-                "kind": RETURN,
-                "free_places": 4,
-                "time_window": 30,
+                # "residence": ResidenceFactory(user=user).pk,
+                # "campus": CampusFactory().pk,
+                # "kind": RETURN,
+                "free_places": 3,
+                # "time_window": 30,
                 "departure": (timezone.now() + datetime.timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S"),
                 "recurrence": "",
             }
             response = self.post(url_name=url_name, pk=journey.pk, data=data)
             self.response_302(response=response)
             journey = Journey.objects.get(pk=journey.pk)
-            self.assertEquals(RETURN, journey.kind)
+            self.assertEquals(data["free_places"], journey.free_places)
 
     def test_get_recommended_journey(self):
         user = self.make_user(username="foo")
@@ -152,7 +153,8 @@ class JourneyViewTests(TestCase):
 
     def test_post_join(self):
         user = self.make_user(username="foo")
-        journey = JourneyFactory(user=user, kind=GOING)
+        template = JourneyTemplateFactory(user=user, kind=GOING)
+        journey = JourneyFactory(template=template)
         url_name = "journeys:join"
         self.assertLoginRequired(url_name, pk=journey.pk)
         with self.login(user):
@@ -161,8 +163,9 @@ class JourneyViewTests(TestCase):
 
     def test_post_join_recurrence_all(self):
         user = self.make_user(username="foo")
-        journey = JourneyFactory(user=user, kind=GOING)
-        journeys = [JourneyFactory(user=user, kind=GOING, parent=journey) for _ in range(10)]
+        template = JourneyTemplateFactory(user=user, kind=GOING)
+        journey = JourneyFactory(template=template)
+        journeys = [JourneyFactory(template=template) for _ in range(10)]
         url_name = "journeys:join"
         self.assertLoginRequired(url_name, pk=journey.pk)
         with self.login(user):
@@ -175,8 +178,9 @@ class JourneyViewTests(TestCase):
 
     def test_post_join_recurrence_one(self):
         user = self.make_user(username="foo")
-        journey = JourneyFactory(user=user, kind=GOING)
-        [JourneyFactory(user=user, kind=GOING, parent=journey) for _ in range(10)]
+        template = JourneyTemplateFactory(user=user, kind=GOING)
+        journey = JourneyFactory(template=template)
+        [JourneyFactory(template=template) for _ in range(10)]
         url_name = "journeys:join"
         self.assertLoginRequired(url_name, pk=journey.pk)
         with self.login(user):
@@ -189,7 +193,7 @@ class JourneyViewTests(TestCase):
 
     def test_post_leave(self):
         user = self.make_user(username="foo")
-        journey = JourneyFactory(user=user, kind=GOING)
+        journey = JourneyFactory(template=JourneyTemplateFactory(user=user))
         journey.join_passenger(user)
         url_name = "journeys:leave"
         self.assertLoginRequired(url_name, pk=journey.pk)
@@ -199,7 +203,7 @@ class JourneyViewTests(TestCase):
 
     def test_post_throw_out(self):
         user = self.make_user(username="foo")
-        journey = JourneyFactory(user=user, kind=GOING)
+        journey = JourneyFactory(template=JourneyTemplateFactory(user=user))
         passenger = journey.join_passenger(user)
         url_name = "journeys:throw-out"
         self.assertLoginRequired(url_name, pk=passenger.pk)
@@ -209,7 +213,8 @@ class JourneyViewTests(TestCase):
 
     def test_cancel_journey(self):
         user = self.make_user(username="foo")
-        journey = JourneyFactory(user=user)
+        template = JourneyTemplateFactory(user=user)
+        journey = JourneyFactory(template=template)
         url_name = "journeys:cancel"
         self.assertLoginRequired(url_name, pk=journey.pk)
         with self.login(user):
@@ -218,7 +223,8 @@ class JourneyViewTests(TestCase):
 
     def test_post_cancel_journey(self):
         user = self.make_user(username="foo")
-        journey = JourneyFactory(user=user)
+        template = JourneyTemplateFactory(user=user)
+        journey = JourneyFactory(template=template)
         url_name = "journeys:cancel"
         self.assertLoginRequired(url_name, pk=journey.pk)
         with self.login(user):
@@ -228,8 +234,8 @@ class JourneyViewTests(TestCase):
 
     def test_delete_journey(self):
         user = self.make_user(username="foo")
-        journeys = [JourneyFactory(user=user) for _ in range(10)]
-        journey = JourneyFactory(user=user)
+        journeys = [JourneyFactory(template=JourneyTemplateFactory(user=user)) for _ in range(10)]
+        journey = JourneyFactory(template=JourneyTemplateFactory(user=user))
         url_name = "journeys:delete"
         self.assertLoginRequired(url_name, pk=journey.pk)
         self.assertEquals(len(journeys) + 1, Journey.objects.count())
@@ -241,8 +247,9 @@ class JourneyViewTests(TestCase):
 
     def test_delete_parent_journeys(self):
         user = self.make_user(username="foo")
-        journey = JourneyFactory(user=user)
-        journeys = [JourneyFactory(user=user, parent=journey) for _ in range(10)]
+        template = JourneyTemplateFactory(user=user)
+        journey = JourneyFactory(template=template)
+        journeys = [JourneyFactory(template=template) for _ in range(10)]
         url_name = "journeys:delete"
         self.assertLoginRequired(url_name, pk=journey.pk)
         self.assertEquals(len(journeys) + 1, Journey.objects.count())
@@ -254,8 +261,9 @@ class JourneyViewTests(TestCase):
 
     def test_delete_all_journeys(self):
         user = self.make_user(username="foo")
-        journey = JourneyFactory(user=user)
-        journeys = [JourneyFactory(user=user, parent=journey) for _ in range(10)]
+        template = JourneyTemplateFactory(user=user)
+        journey = JourneyFactory(template=template)
+        journeys = [JourneyFactory(template=template) for _ in range(10)]
         other_journeys = [JourneyFactory() for _ in range(5)]
         url_name = "journeys:delete-all"
         self.assertLoginRequired(url_name, pk=journey.pk)

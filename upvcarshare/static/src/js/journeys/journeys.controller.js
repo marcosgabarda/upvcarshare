@@ -94,7 +94,7 @@ class DatetimeController {
   }
 
   $onInit() {
-    var date = this.value !== undefined ? moment(this.value).toDate() : new Date();
+    const date = this.value !== undefined ? moment(this.value).toDate() : new Date();
     this.picker = {
       date: date,
       open: false,

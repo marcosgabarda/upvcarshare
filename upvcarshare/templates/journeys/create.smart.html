@@ -48,7 +48,7 @@
                                     {% endblock %}
                                 </div>
                             </div>
-                          {% elif field.name == "transport" %}
+                        {% elif field.name == "transport" %}
                                 <div class="row">
                                     <div class="col-sm-7">
                                         {{ field }}
@@ -61,8 +61,10 @@
                                 </div>
                         {% elif field.name == "departure" %}
                             <journey-datetime field-name="{{ field.name }}" field-id="{{ field.auto_id }}" value="{{ field.value|date:"c" }}" on-update="onUpdateDeparture(value)"></journey-datetime>
+                            <r-rules field-id="id_recurrence" field-name="recurrence" override-departure="newDepartureValue"></r-rules>
                         {% elif field.name == "arrival" %}
                             <journey-datetime field-name="{{ field.name }}" field-id="{{ field.auto_id }}" value="{{ field.value|date:"c" }}" override-value="newArrivalValue"></journey-datetime>
+                        {% elif field.name == "recurrence" %}
                         {% else %}
                             {{ field }}
                         {% endif %}
@@ -73,7 +75,7 @@
                     {% endif %}
                 {% endfor %}
                 <div class="form-group">
-                    <div class="col-sm-2 pull-right">
+                    <div class="offset-sm-4 col-sm-8">
                         <button type="submit" class="btn btn-success">{% trans "Guardar" %}</button>
                         <a href="{% url "journeys:list" %}" class="btn btn-danger">{% trans "Volver" %}</a>
                     </div>

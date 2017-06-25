@@ -12,10 +12,10 @@ SECRET_KEY = env('DJANGO_SECRET_KEY', default='o#bpi3*=nzn5r-9i!db1&h&oo0%5wmzud
 # ------------------------------------------------------------------------------
 # Database in memory for tests
 DATABASES = {
-    "default": {
-        "ENGINE": "django.contrib.gis.db.backends.spatialite",
-        "NAME": ":memory:",
-    },
+    'default': env.db(
+        'DATABASE_URL', default='spatialite:///{}'.format(str(ROOT_DIR.path('{}.db'.format(PROJECT_NAME.lower()))))
+    ),
 }
+DATABASES['default']['PORT'] = str(DATABASES['default']['PORT'])  # Fix a problem with Oracle connector
 DATABASES['default']['ATOMIC_REQUESTS'] = True
 SPATIALITE_LIBRARY_PATH = env('SPATIALITE_LIBRARY_PATH', default='/usr/local/lib/mod_spatialite.dylib')

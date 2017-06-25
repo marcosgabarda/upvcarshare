@@ -4,12 +4,13 @@ from __future__ import unicode_literals, print_function, absolute_import
 import datetime
 
 import six
+from django.utils.timezone import make_aware
 from test_plus import TestCase
 
 from journeys import DEFAULT_PROJECTED_SRID, DEFAULT_GOOGLE_MAPS_SRID
 from journeys.forms import SearchJourneyForm
 from journeys.helpers import make_point
-from journeys.tests.factories import JourneyFactory
+from journeys.tests.factories import JourneyFactory, JourneyTemplateFactory
 from users.tests.factories import UserFactory
 from users.tests.mocks import UPVLoginDataService
 
@@ -24,8 +25,14 @@ class JourneysFormsTest(TestCase):
 
     def test_search_form(self):
         user = UserFactory()
-        JourneyFactory(departure=datetime.datetime.now() + datetime.timedelta(days=2), user=user, driver=user)
-        journey = JourneyFactory(user=user, driver=user)
+        template = JourneyTemplateFactory(
+            departure=make_aware(datetime.datetime.now() + datetime.timedelta(days=2)),
+            user=user,
+            driver=user
+        )
+        JourneyFactory(template=template, departure=template.departure)
+        template = JourneyTemplateFactory(user=user, driver=user)
+        journey = JourneyFactory(template=template)
 
         data = {
             "departure_date": journey.departure.date(),
@@ -36,7 +43,7 @@ class JourneysFormsTest(TestCase):
                 journey.residence.position,
                 origin_coord_srid=DEFAULT_PROJECTED_SRID,
                 destiny_coord_srid=DEFAULT_GOOGLE_MAPS_SRID
-            ))
+            )),
         }
         form = SearchJourneyForm(data)
         self.assertTrue(form.is_valid())

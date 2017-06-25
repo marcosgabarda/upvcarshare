@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from journeys import GOING
-from journeys.tests.factories import CampusFactory, JourneyFactory
+from journeys.tests.factories import CampusFactory, JourneyFactory, JourneyTemplateFactory
 from journeys.tests.factories import ResidenceFactory
 from notifications import JOIN
 from notifications import LEAVE
@@ -30,7 +30,9 @@ class NotificationAPITests(APITestCase):
         user = UserFactory() if user is None else user
         origin = ResidenceFactory(user=user)
         destination = CampusFactory()
-        return JourneyFactory(user=user, residence=origin, campus=destination, kind=kind)
+        return JourneyFactory(
+            template=JourneyTemplateFactory(user=user, residence=origin, campus=destination, kind=kind)
+        )
 
     def test_get_notifications(self):
         user = UserFactory()

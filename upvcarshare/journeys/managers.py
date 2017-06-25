@@ -21,15 +21,18 @@ def recommended_condition(journey, override_distance=None):
     :param journey:
     :param override_distance:
     """
-    key = "template__residence{}" if journey.kind == GOING else "template__campus{}"
-    distance = getattr(journey, key.format("")).distance if override_distance is None else override_distance
+    template = journey.template
+    template_key = "residence{}" if journey.template.kind == GOING else "campus{}"
+    key = "template__%s" % template_key
+    distance = getattr(template, template_key.format("")).distance \
+        if override_distance is None else override_distance
     return {
         key.format("__position__distance_lte"): (
-            getattr(journey, key.format("")).position,
+            getattr(template, template_key.format("")).position,
             D(m=distance)
         ),
-        "departure__lte": journey.departure + datetime.timedelta(minutes=journey.time_window),
-        "departure__gte": journey.departure - datetime.timedelta(minutes=journey.time_window),
+        "departure__lte": journey.departure + datetime.timedelta(minutes=journey.template.time_window),
+        "departure__gte": journey.departure - datetime.timedelta(minutes=journey.template.time_window),
     }
 
 
@@ -66,7 +69,7 @@ class JourneyTemplateManager(models.GeoManager):
         }
         if transport is not None:
             data["driver"] = user
-            data["free_places"] = transport.default_places
+            # data["free_places"] = transport.default_places
         return self.create(**data)
 
 
@@ -75,7 +78,7 @@ class JourneyQuerySet(models.QuerySet):
     def visible(self, user=None):
         """Journey visible for the given user."""
         if user is not None:
-            return self.filter(user__groups=user.groups.all())
+            return self.filter(template__user__groups=user.groups.all())
         return self
 
 
@@ -115,7 +118,7 @@ class JourneyManager(models.GeoManager):
 
         nearby = self.available(kind=kind)
         if kind is not None:
-            key = "residence{}" if kind == GOING else "campus{}"
+            key = "template__residence{}" if kind == GOING else "template__campus{}"
             key = key.format("__position__distance_lte")
             nearby = nearby.filter(**{key: (geometry, distance)})
         else:
@@ -133,7 +136,7 @@ class JourneyManager(models.GeoManager):
         now = timezone.now()
         queryset = self.filter(template__user=user, template__driver__isnull=True, departure__gt=now)
         if kind is not None:
-            queryset = queryset.filter(kind=kind)
+            queryset = queryset.filter(template__kind=kind)
         return queryset
 
     def recommended(self, user, kind=None, journey=None, override_distance=None, ignore_full=False):
