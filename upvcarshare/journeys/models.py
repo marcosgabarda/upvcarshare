@@ -82,7 +82,12 @@ class Residence(Place):
     here. Each residence belongs to a user.
     """
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="residences")
-    address = models.TextField(verbose_name=_("dirección"), help_text=_("La dirección del lugar, según quieras que la vean los demás."))
+    address = models.TextField(
+        verbose_name=_("dirección"),
+        help_text=_("La dirección del lugar, según quieras que la vean los demás."),
+        default="",
+        blank=True
+    )
 
     objects = ResidenceManager()
 
@@ -194,7 +199,9 @@ class JourneyTemplate(GisTimeStampedModel):
             rules = rrulestr(self.recurrence, dtstart=self.departure)
             if rules._until is None:
                 rules._until = default_until(self.departure)
-            dates = list(map(lambda d: make_aware(d), list(rules)))
+            dates = list(rules)
+            if dates and dates[0].tzinfo is None:
+                dates = list(map(lambda d: make_aware(d), dates))
             return zip(dates, map(lambda d: d + interval, dates))
         return [(self.departure, self.arrival)]
 
@@ -311,6 +318,17 @@ class Journey(GisTimeStampedModel):
             return self.free_places - self.count_passengers()
         return 0
 
+    def _join_passenger(self, user):
+        if self.passengers.filter(user=user).exists() or self.template.driver == user:
+            raise AlreadyAPassenger()
+        if self.count_passengers() < self.free_places:
+            passenger = Passenger.objects.create(
+                journey=self,
+                user=user,
+                status=UNKNOWN
+            )
+            return passenger
+
     @dispatch(JOIN)
     def join_passenger(self, user, join_to=None):
         """A user joins a journey.
@@ -319,21 +337,13 @@ class Journey(GisTimeStampedModel):
         """
         # Join only one
         if join_to is None or join_to == "one":
-            if self.passengers.filter(user=user).exists() or self.template.driver == user:
-                raise AlreadyAPassenger()
-            if self.count_passengers() < self.free_places:
-                passenger = Passenger.objects.create(
-                    journey=self,
-                    user=user,
-                    status=UNKNOWN
-                )
-                return passenger
+            return self._join_passenger(user=user)
         # Join to recurrence
         elif join_to is not None and join_to == "all":
             if self.has_recurrence:
-                journeys = self.brothers()
+                journeys = self.brothers(exclude_myself=True)
                 journeys = journeys.filter(departure__gte=self.departure)
-                passengers = []
+                passengers = [self._join_passenger(user=user)]
                 for journey in journeys:
                     try:
                         passengers.append(journey.join_passenger(user))
@@ -344,9 +354,9 @@ class Journey(GisTimeStampedModel):
         elif join_to is not None and len(join_to.split("/")) > 0:
             dates = map(lambda item: datetime.datetime.strptime(item, "%d/%m/%Y"), join_to.split(","))
             conditions = [Q(departure__day=date.day, departure__month=date.month, departure__year=date.year) for date in dates]
-            journeys = self.brothers()
+            journeys = self.brothers(exclude_myself=True)
             journeys = journeys.filter(reduce(lambda x, y: x | y, conditions))
-            passengers = []
+            passengers = [self._join_passenger(user=user)]
             for journey in journeys:
                 try:
                     passengers.append(journey.join_passenger(user))
@@ -355,11 +365,7 @@ class Journey(GisTimeStampedModel):
             return passengers
         raise NoFreePlaces()
 
-    @dispatch(LEAVE)
-    def leave_passenger(self, user):
-        """A user leave a journey.
-        :param user:
-        """
+    def _leave_passenger(self, user):
         if not self.is_passenger(user=user):
             raise NotAPassenger()
         self.passengers.filter(user=user).delete()
@@ -367,6 +373,13 @@ class Journey(GisTimeStampedModel):
         if self.total_passengers < 0:
             self.total_passengers = 0
         self.save()
+
+    @dispatch(LEAVE)
+    def leave_passenger(self, user, leave_from=None):
+        """A user leave a journey.
+        :param user:
+        """
+        self._leave_passenger(user=user)
 
     @dispatch(THROW_OUT)
     def throw_out(self, user):

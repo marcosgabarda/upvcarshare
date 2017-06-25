@@ -6,7 +6,6 @@ import datetime
 import floppyforms
 import pytz
 import re
-from dateutil.rrule import rrulestr
 from django import forms
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.exceptions import ObjectDoesNotExist
@@ -36,7 +35,7 @@ class ResidenceForm(forms.ModelForm):
         fields = ["name", "address", "position", "distance"]
         widgets = {
             "name": forms.TextInput(attrs={"class": "form-control"}),
-            "address": forms.Textarea(attrs={"class": "form-control"}),
+            "address": forms.HiddenInput(attrs={"class": "form-control", "ng-value": "address"}),
         }
 
     def clean_position(self):
@@ -63,15 +62,6 @@ class ResidenceForm(forms.ModelForm):
 
 
 class JourneyForm(forms.ModelForm):
-
-    i_am_driver = forms.BooleanField(
-        label=_("¿Eres conductor?"),
-        required=False,
-        initial=False,
-        widget=forms.RadioSelect(
-            choices=((True, _('Sí')), (False, _('No'))),
-        )
-    )
 
     class Meta:
         model = Journey
@@ -120,8 +110,8 @@ class JourneyForm(forms.ModelForm):
 
 class SmartJourneyTemplateForm(forms.ModelForm):
 
-    origin = forms.CharField(widget=forms.HiddenInput())
-    destiny = forms.CharField(widget=forms.HiddenInput())
+    origin = forms.CharField(widget=forms.HiddenInput(), required=False)
+    destiny = forms.CharField(widget=forms.HiddenInput(), required=False)
 
     i_am_driver = forms.BooleanField(
         label=_("¿Soy conductor?*"),
@@ -137,9 +127,10 @@ class SmartJourneyTemplateForm(forms.ModelForm):
     )
 
     free_places = forms.IntegerField(
-        label=_("Cuántas plazas libres tengo"),
+        label=_("Plazas libres"),
         required=False,
-        widget=forms.NumberInput(attrs={"class": "form-control"})
+        widget=forms.NumberInput(attrs={"class": "form-control"}),
+        help_text=_("Dejar en blanco para usar el valor por defecto del transporte seleccionado")
     )
 
     class Meta:
@@ -170,6 +161,8 @@ class SmartJourneyTemplateForm(forms.ModelForm):
 
     def clean_origin(self):
         origin = self.cleaned_data["origin"]
+        if not origin:
+            raise forms.ValidationError(_("El origen obligatorio"))
         data = origin.split(":")
         models = {"residence": Residence, "campus": Campus}
         try:
@@ -179,6 +172,8 @@ class SmartJourneyTemplateForm(forms.ModelForm):
 
     def clean_destiny(self):
         destiny = self.cleaned_data["destiny"]
+        if not destiny:
+            raise forms.ValidationError(_("El destino obligatorio"))
         data = destiny.split(":")
         models = {"residence": Residence, "campus": Campus}
         try:
@@ -188,6 +183,7 @@ class SmartJourneyTemplateForm(forms.ModelForm):
 
     def clean_departure(self):
         departure = self.cleaned_data["departure"]
+        departure = timezone.localtime(departure, pytz.timezone("UTC"))
         time_window = self.cleaned_data.get("time_window", 30)
         now = timezone.now()
         if departure < now:
@@ -211,14 +207,18 @@ class SmartJourneyTemplateForm(forms.ModelForm):
     def clean_free_places(self):
         free_places = self.cleaned_data["free_places"]
         transport = self.cleaned_data["transport"]
+        if not free_places and transport:
+            free_places = transport.default_places
         if transport is not None and free_places > transport.default_places:
             raise forms.ValidationError(_("No puedes ofertar más plazas que las que tienes en el transporte"))
         return free_places
 
     def clean_recurrence(self):
-        """Delete DTSTART from recurrence, we use departure field."""
+        """Delete bad data from recurrence."""
         recurrence = self.cleaned_data["recurrence"]
-        return re.sub(r"DTSTART=.+;", "", recurrence)
+        recurrence = re.sub(r"DTSTART=.+;", "", recurrence)
+        recurrence = re.sub(r"BYSECOND=NAN", "", recurrence)
+        return recurrence
 
     def save(self, commit=True, **kwargs):
         """When save a journey form, you have to provide an user."""
@@ -374,7 +374,7 @@ class SearchJourneyForm(forms.Form):
         distance = self.cleaned_data["distance"]
         departure_date = self.cleaned_data["departure_date"]
         departure_time = self.cleaned_data["departure_time"]
-        departure = make_aware(datetime.datetime.combine(departure_date, departure_time))
+        departure = make_aware(datetime.datetime.combine(departure_date, departure_time), timezone=pytz.timezone("UTC"))
         search_by_time = self.cleaned_data.get("search_by_time", False)
         time_window = self.cleaned_data["time_window"]
         return Journey.objects.search(

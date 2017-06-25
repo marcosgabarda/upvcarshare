@@ -1,5 +1,5 @@
 {% extends "header.html" %}
-
+{% load core_tags %}
 {% load i18n %}
 
 {% block title %}{% trans "Crear viaje" %}{% endblock title %}
@@ -55,15 +55,15 @@
                                     </div>
                                     <div class="col-sm-5">
                                       <div class="btn-group float-xs-right" role="group" aria-label="{% trans "Acciones" %}">
-                                        <a href="{% url "journeys:create-transport" %}" class="btn btn-outline-success">{% trans "Crear nuevo transporte" %}</a>
+                                        <a href="{% url "journeys:create-transport" %}?next=/journeys/create/" class="btn btn-outline-success">{% trans "Crear nuevo transporte" %}</a>
                                       </div>
                                     </div>
                                 </div>
                         {% elif field.name == "departure" %}
-                            <journey-datetime field-name="{{ field.name }}" field-id="{{ field.auto_id }}" value="{{ field.value|date:"c" }}" on-update="onUpdateDeparture(value)"></journey-datetime>
+                            <journey-datetime field-name="{{ field.name }}" field-id="{{ field.auto_id }}" value="{{ field.value|smart_date|date:"c" }}" on-update="onUpdateDeparture(value)" master="true"></journey-datetime>
                             <r-rules field-id="id_recurrence" field-name="recurrence" override-departure="newDepartureValue"></r-rules>
                         {% elif field.name == "arrival" %}
-                            <journey-datetime field-name="{{ field.name }}" field-id="{{ field.auto_id }}" value="{{ field.value|date:"c" }}" override-value="newArrivalValue"></journey-datetime>
+                            <journey-datetime field-name="{{ field.name }}" field-id="{{ field.auto_id }}" value="{{ field.value|smart_date|date:"c" }}" override-value="newArrivalValue"></journey-datetime>
                         {% elif field.name == "recurrence" %}
                         {% else %}
                             {{ field }}

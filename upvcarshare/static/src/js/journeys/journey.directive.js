@@ -32,6 +32,16 @@ const JourneyForm = () => ({
   }
 });
 
+const ResidenceForm = () => ({
+  restrict: 'A',
+  link: (scope, element, attr) => {
+    scope.address = "";
+    scope.onUpdateAddress = (value) => {
+      scope.address = value;
+    }
+  }
+});
+
 const JoinJourneyForm = ($uibModal) => ({
   restrict: 'A',
   link: (scope, element, attr) => {
@@ -143,4 +153,4 @@ RejectPassengerForm.$inject = ["$uibModal"];
 
 
 export {JourneyForm, JoinJourneyForm, SearchJourneyForm, ConfirmPassengerForm,
-  RejectPassengerForm};
+  RejectPassengerForm, ResidenceForm};

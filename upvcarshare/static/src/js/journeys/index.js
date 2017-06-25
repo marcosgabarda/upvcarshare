@@ -15,7 +15,8 @@ import {
   JoinJourneyForm,
   SearchJourneyForm,
   ConfirmPassengerForm,
-  RejectPassengerForm
+  RejectPassengerForm,
+  ResidenceForm
 } from './journey.directive';
 import JoinAllOneController from './journeys.controller';
 
@@ -50,6 +51,7 @@ const journeys = angular
   .component('rRules', RRulesComponent)
 
   .directive('journeyForm', JourneyForm)
+  .directive('residenceForm', ResidenceForm)
   .directive('searchJourneyForm', SearchJourneyForm)
   .directive('joinJourneyForm', JoinJourneyForm)
   .directive('confirmPassengerForm', ConfirmPassengerForm)

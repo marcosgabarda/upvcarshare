@@ -15,7 +15,7 @@
 {% block content %}
     <div class="row">
         <div class="col-xs-12">
-            <form method="post" action="">
+            <form method="post" action="" residence-form>
                 {% csrf_token %}
                 {% for field in form %}
                     {% if field.name == "position" %}
@@ -27,7 +27,8 @@
                                             position-field-id="{{ form.position.auto_id }}"
                                             radius-value="{{ form.distance.value }}"
                                             radius-field="{{ form.distance.name }}"
-                                            radius-field-id="{{ form.distance.auto_id }}">
+                                            radius-field-id="{{ form.distance.auto_id }}"
+                                            on-update="onUpdateAddress(value)">
                                 </circle-map>
                                 <span class="text-muted">{{ field.help_text }}</span>
                                 <span class="text-muted">{{ field.errors }}</span>
@@ -35,6 +36,7 @@
                         </div>
                     {% elif field.name == "distance" %}
                     {% else %}
+                        {% if not field.is_hidden %}
                         <div class="form-group row{% if field.errors %} has-danger{% endif %}">
                             <label for="{{ field.auto_id }}" class="col-sm-3 form-control-label">{{ field.label }}</label>
                             <div class="col-sm-9">
@@ -43,6 +45,9 @@
                                 <span class="text-muted">{{ field.errors }}</span>
                             </div>
                         </div>
+                        {% else %}
+                            {{ field }}
+                        {% endif %}
                     {% endif %}
                 {% endfor %}
                 <div class="form-group row">

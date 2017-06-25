@@ -10,6 +10,7 @@ from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 from django.utils.timezone import make_naive
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import View
@@ -27,7 +28,8 @@ class CreateJourneyView(LoginRequiredMixin, View):
     template_name = "journeys/create.smart.html"
     form = SmartJourneyTemplateForm
 
-    def get(self, request):
+    @staticmethod
+    def _initial_values(request):
         residences = Residence.objects.filter(user=request.user)
         campuses = Campus.objects.all()
         initial_departure = timezone.now().replace(second=0, minute=0) + datetime.timedelta(hours=1)
@@ -38,29 +40,38 @@ class CreateJourneyView(LoginRequiredMixin, View):
             "departure": initial_departure,
             "arrival": initial_departure + datetime.timedelta(minutes=30)
         }
+        return initial
+
+    def get(self, request):
+        initial = self._initial_values(request)
         form = self.form(initial=initial, user=request.user)
         data = {
             "form": form
         }
         # Warnings
         if request.user.transports.count() == 0:
-            messages.warning(request, _("Parece que no has creado ningún medio de transporte, "
-                                        "si quieres crear un viaje y que otros compañeros puedan "
-                                        "apuntarse, tienes que registrar antes un medio de transporte."))
+            messages.warning(request, mark_safe(_(
+                "Parece que no has creado ningún medio de transporte, "
+                "si quieres crear un viaje y que otros compañeros puedan "
+                "apuntarse, tienes que <strong>registrar antes un medio de transporte</strong>."
+            )))
         if request.user.residences.count() == 0:
-            messages.warning(request, _("Parece que no has especificado desde donde o hasta donde sueles viajar. "
-                                        "Para dar de alta un viaje deberás antes registrar al menos un lugar para usar "
-                                        "como origen o destino."))
+            messages.warning(request, mark_safe(_(
+                "Parece que no has especificado desde donde o hasta donde sueles viajar. "
+                "Para dar de alta un viaje deberás antes <strong>registrar al menos un lugar</strong> para usar "
+                "como origen o destino."
+            )))
         return render(request, self.template_name, data)
 
     def post(self, request):
-        form = self.form(request.POST, user=request.user)
+        form = self.form(request.POST, user=request.user, initial=self._initial_values(request))
         data = {
             "form": form
         }
         if form.is_valid():
-            journey = form.save()
-            return redirect("journeys:details", pk=journey.pk)
+            journey_template = form.save()
+            journeys = journey_template.journeys.order_by("-departure")
+            return redirect("journeys:details", pk=journeys.first().pk)
         return render(request, self.template_name, data)
 
 

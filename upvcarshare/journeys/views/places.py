@@ -36,7 +36,7 @@ class CreateResidenceView(LoginRequiredMixin, View):
         if form.is_valid():
             residence = form.save(user=request.user)
             messages.success(request, ugettext('Has creado el lugar "%s"') % residence.name)
-            return redirect("journeys:residences")
+            return redirect(request.GET.get("next", "journeys:residences"))
         return render(request, self.template_name, data)
 
 

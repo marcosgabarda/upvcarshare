@@ -30,7 +30,8 @@ const DatetimeComponent = {
     fieldName: '@',
     fieldId: '@',
     overrideValue: '<',
-    onUpdate: '&'
+    onUpdate: '&',
+    master: '='
   }
 };
 
@@ -85,7 +86,8 @@ const CircleMapComponent = {
     radiusFieldId: '@',
     positionValue: '@',
     positionField: '@',
-    positionFieldId: '@'
+    positionFieldId: '@',
+    onUpdate: '&'
   }
 };
 
