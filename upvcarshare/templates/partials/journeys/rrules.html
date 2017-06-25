@@ -1,0 +1,64 @@
+{% load i18n %}
+<div class="row">
+  <div class="col-xs-12">
+    <input type="hidden" name="[[$ctrl.fieldName]]" id="[[$ctrl.fieldId]]" ng-value="$ctrl.rruleString"/>
+    <label class="form-check-label">
+      <input type="checkbox" ng-model="$ctrl.isActivated" /> {% trans "Quiero realizar el viaje más de una vez" %}
+    </label>
+  </div>
+</div>
+<div class="row" ng-class="{'hidden-xs-up': !$ctrl.isActivated}" style="margin-top: 15px">
+  <div class="col-xs-12">
+    <label>{% trans "Se repite:" %}</label>
+    <select ng-init="$ctrl.rrule.freq = $ctrl.freqOptions[2].value"
+            ng-model="$ctrl.rrule.freq"
+            ng-options="freqOption.value as freqOption.label for freqOption in $ctrl.freqOptions">
+            >
+    </select>
+  </div>
+  <div class="col-xs-12">
+    <label>{% trans "Repetir cada:" %}</label>
+    <select ng-model="$ctrl.rrule.interval"
+            ng-options="intervalOption as intervalOption for intervalOption in $ctrl.intervalOptions">
+            >
+    </select>
+    [[$ctrl.intervalLabel]]
+  </div>
+  <div class="col-xs-12" ng-class="{'hidden-xs-up': $ctrl.hiddeByweekday()}">
+    <label>{% trans "Repetir el:" %}</label>
+    <label class="form-check-label" ng-repeat="byweekdayOption in $ctrl.byweekdayOptions">
+      <input type="checkbox"
+             ng-model="byweekdayOption.model"
+             /> [[byweekdayOption.label]]
+    </label>
+  </div>
+  <div class="col-xs-12">
+    <div class="row">
+      <div class="col-xs-1">
+        <label>{% trans "Finaliza:" %}</label>
+      </div>
+      <div class="col-xs-11">
+        <ul class="list-unstyled">
+          <li>
+            <label>
+                <input type="radio" name="ends" ng-model="$ctrl.ends" value="never"> {% trans "Nunca" %}
+            </label>
+          </li>
+          <li>
+            <label>
+                <input type="radio" name="ends" ng-model="$ctrl.ends" value="count"> {% trans "Al cabo de" %} <input type="text" ng-model="$ctrl.rrule.count" class="form-control" style="width: 40px; display: inline-block"> {% trans "repeticiones" %}
+            </label>
+          </li>
+          <li>
+            <label>
+                <input type="radio" name="ends" ng-model="$ctrl.ends" value="until"> {% trans "El" %} <input type="date" ng-model="$ctrl.rrule.until" class="form-control" style="width: 150px; display: inline-block">
+            </label>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="col-xs-12">
+    <p><strong>Resumen: [[$ctrl.rruleText]]</strong></p>
+  </div>
+</div>

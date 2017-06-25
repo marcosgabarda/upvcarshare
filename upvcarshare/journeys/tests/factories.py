@@ -28,7 +28,7 @@ class CampusFactory(factory.django.DjangoModelFactory):
         model = "journeys.Campus"
 
 
-class JourneyFactory(factory.django.DjangoModelFactory):
+class JourneyTemplateFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
     residence = factory.SubFactory(ResidenceFactory)
     campus = factory.SubFactory(CampusFactory)
@@ -36,6 +36,15 @@ class JourneyFactory(factory.django.DjangoModelFactory):
     arrival = factory.LazyFunction(lambda: timezone.now() + datetime.timedelta(days=1, minutes=30))
     time_window = DEFAULT_TIME_WINDOW
     kind = GOING
+
+    class Meta:
+        model = "journeys.JourneyTemplate"
+
+
+class JourneyFactory(factory.django.DjangoModelFactory):
+    template = factory.SubFactory(JourneyTemplateFactory)
+    departure = factory.LazyFunction(lambda: timezone.now() + datetime.timedelta(days=1))
+    arrival = factory.LazyFunction(lambda: timezone.now() + datetime.timedelta(days=1, minutes=30))
 
     class Meta:
         model = "journeys.Journey"

@@ -3,7 +3,7 @@
     .angular-google-map-container { height: 300px; }
 </style>
 <script id="searchbox.tpl.html" type="text/ng-template">
-    <input type="text" class="form-control map-search-box" placeholder="{% trans "Buscar una dirección..." %}" prevent-submit>
+    <input type="text" class="form-control map-search-box" placeholder="{% trans "Escribe la dirección" %}" prevent-submit>
 </script>
 <div id="map-canvas">
     <ui-gmap-google-map center="$ctrl.map.center" zoom="$ctrl.map.zoom" draggable="true" options="$ctrl.map.options">

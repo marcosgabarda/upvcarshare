@@ -1,4 +1,9 @@
-import {JoinAllOneController, ConfirmRejectPassengerController} from './journeys.controller';
+import {
+  JoinAllOneController,
+  ConfirmRejectPassengerController,
+  LeaveAllOneController,
+  ConfirmThrowPassengerController
+} from './journeys.controller';
 import moment from 'moment';
 
 
@@ -21,13 +26,24 @@ const JourneyForm = () => ({
   link: (scope, element, attr) => {
     scope.iAmDriver = "False";
     scope.newArrivalValue = null;
+    scope.newDepartureValue = null;
 
     scope.onUpdateDeparture = (value) => {
-      // console.log("Updated departure: ", value);
-      var newValue = moment(value).add(30, 'm');
+      scope.newDepartureValue = value;
+      let newValue = moment(value).add(30, 'm');
       scope.newArrivalValue = newValue.toDate();
     };
 
+  }
+});
+
+const ResidenceForm = () => ({
+  restrict: 'A',
+  link: (scope, element, attr) => {
+    scope.address = "";
+    scope.onUpdateAddress = (value) => {
+      scope.address = value;
+    }
   }
 });
 
@@ -74,6 +90,45 @@ const JoinJourneyForm = ($uibModal) => ({
 });
 JoinJourneyForm.$inject = ["$uibModal"];
 
+const LeaveJourneyForm = ($uibModal) => ({
+  restrict: 'A',
+  link: (scope, element, attr) => {
+    // Initial value for leave from value to one. It could be 'one' or 'all'
+    scope.leaveFromValue = null;
+    scope.journeyId = attr.journeyId;
+
+    // Function to open modal
+    function openModal() {
+      var modalInstance = $uibModal.open({
+        animation: true,
+        templateUrl: 'leave-all-one.html',
+        controller: LeaveAllOneController,
+        resolve: {
+          journeyId: function () {
+            return scope.journeyId;
+          }
+        }
+      });
+      modalInstance.result.then( (selectedOption) => {
+        scope.leaveFromValue = selectedOption;
+        var field = element.find("[name='leave_from']");
+        field.val(selectedOption);
+        element.submit();
+      });
+    }
+
+    // Link on submit form
+    element.submit(() => {
+      if (scope.leaveFromValue == null) {
+        openModal();
+        return false;
+      }
+      return true;
+    });
+  }
+});
+LeaveJourneyForm.$inject = ["$uibModal"];
+
 
 const ConfirmPassengerForm = ($uibModal) => ({
   restrict: 'A',
@@ -107,6 +162,36 @@ const ConfirmPassengerForm = ($uibModal) => ({
 });
 ConfirmPassengerForm.$inject = ["$uibModal"];
 
+const ThrowPassengerForm = ($uibModal) => ({
+  restrict: 'A',
+  link: (scope, element, attr) => {
+    // Initial value for join to value to one. It could be 'one' or 'all'
+    scope.confirmValue = null;
+
+    // Function to open modal
+    function openModal() {
+      var modalInstance = $uibModal.open({
+        animation: true,
+        templateUrl: 'throw-passenger.html',
+        controller: ConfirmThrowPassengerController
+      });
+      modalInstance.result.then( (selectedOption) => {
+        scope.confirmValue = selectedOption;
+        element.submit();
+      });
+    }
+
+    // Link on submit form
+    element.submit(() => {
+      if (scope.confirmValue == null) {
+        openModal();
+        return false;
+      }
+      return scope.confirmValue;
+    });
+  }
+});
+ThrowPassengerForm.$inject = ["$uibModal"];
 
 const RejectPassengerForm = ($uibModal) => ({
   restrict: 'A',
@@ -142,4 +227,4 @@ RejectPassengerForm.$inject = ["$uibModal"];
 
 
 export {JourneyForm, JoinJourneyForm, SearchJourneyForm, ConfirmPassengerForm,
-  RejectPassengerForm};
+  RejectPassengerForm, ResidenceForm, LeaveJourneyForm, ThrowPassengerForm};

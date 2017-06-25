@@ -4,6 +4,7 @@ from __future__ import unicode_literals, print_function, absolute_import
 import datetime
 
 import recurrence
+from dateutil.rrule import rrule, DAILY
 from django.contrib.gis.geos import Point
 from django.utils.timezone import make_naive
 from test_plus import TestCase
@@ -11,7 +12,7 @@ from test_plus import TestCase
 from journeys import DEFAULT_PROJECTED_SRID, DEFAULT_WGS84_SRID
 from journeys.helpers import make_point_wgs84, make_point_projected, date_to_datetime, first_day_current_week, \
     last_day_current_week, expand
-from journeys.tests.factories import JourneyFactory
+from journeys.tests.factories import JourneyFactory, JourneyTemplateFactory
 from users.tests.mocks import UPVLoginDataService
 
 try:
@@ -44,35 +45,31 @@ class JourneysHelpersTest(TestCase):
         self.assertIsInstance(last_day_current_week(), datetime.date)
 
     def test_expand(self):
-        journey = JourneyFactory()
-        journey.departure = journey.departure.replace(month=1)
+        journey = JourneyTemplateFactory()
+        journey.departure = journey.departure.replace(day=1, month=1)
         journey.save()
-
-        rule = recurrence.Rule(recurrence.DAILY)
-        pattern = recurrence.Recurrence(
-            dtstart=make_naive(journey.departure) + datetime.timedelta(days=1),
-            dtend=make_naive(journey.departure) + datetime.timedelta(days=20),
-            rrules=[rule, ]
+        pattern = rrule(
+            dtstart=make_naive(journey.departure),
+            until=make_naive(journey.departure) + datetime.timedelta(days=20),
+            freq=DAILY
         )
-
-        journey.recurrence = pattern
+        journey.recurrence = str(pattern)
         journey.save()
         journeys = expand(journey)
-        self.assertEquals(22, len(journeys))
+        self.assertEquals(21, len(journeys))
 
     def test_expand_september(self):
-        journey = JourneyFactory()
+        journey = JourneyTemplateFactory()
         journey.departure = journey.departure.replace(day=1, month=9)
         journey.save()
 
-        rule = recurrence.Rule(recurrence.DAILY)
-        pattern = recurrence.Recurrence(
+        pattern = rrule(
             dtstart=make_naive(journey.departure) + datetime.timedelta(days=1),
-            dtend=make_naive(journey.departure) + datetime.timedelta(days=20),
-            rrules=[rule, ]
+            until=make_naive(journey.departure) + datetime.timedelta(days=20),
+            freq=DAILY
         )
 
-        journey.recurrence = pattern
+        journey.recurrence = str(pattern)
         journey.save()
         journeys = expand(journey)
-        self.assertEquals(22, len(journeys))
+        self.assertEquals(20, len(journeys))

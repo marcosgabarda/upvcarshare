@@ -9,7 +9,7 @@ from core.widgets import OsmPointWidget
 from journeys import DEFAULT_GOOGLE_MAPS_SRID, DEFAULT_PROJECTED_SRID, DEFAULT_WGS84_SRID
 from journeys.helpers import make_point_projected, make_point
 from journeys.models import Residence, Journey, Campus, Message, Transport, \
-    Passenger
+    Passenger, JourneyTemplate
 
 
 class PlaceAdminForm(forms.ModelForm):
@@ -63,8 +63,12 @@ class CampusAdminForm(admin.GeoModelAdmin):
 
 @admin.register(Journey)
 class JourneyAdmin(admin.ModelAdmin):
-    list_display = ["id", "residence", "campus", "kind", "departure",
-                    "created"]
+    list_display = ["id", "departure", "created"]
+
+
+@admin.register(JourneyTemplate)
+class JourneyAdmin(admin.ModelAdmin):
+    list_display = ["id", "residence", "campus", "kind", "created"]
 
 
 @admin.register(Passenger)
