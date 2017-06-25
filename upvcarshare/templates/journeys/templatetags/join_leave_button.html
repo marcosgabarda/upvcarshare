@@ -26,9 +26,23 @@
         {% endif %}
     </form>
 {% elif not journey_item.needs_driver and journey_item|is_passenger:request.user %}
-    <form method="post" action="{% url "journeys:leave" journey_item.pk %}">
+    <form method="post" action="{% url "journeys:leave" journey_item.pk %}" {% if journey_item.has_recurrence %}leave-journey-form journey-id="{{ journey_item.pk }}"{% endif %}>
         {% csrf_token %}
         <input type="hidden" name="return_to" value="{{ request.path }}">
-        <button type="submit" class="btn btn-danger">{% trans "Abandonar" %}</button>
+        {% if not journey_item.has_recurrence %}
+            <input type="hidden" name="leave_from" value="one">
+            <button type="submit" class="btn btn-danger">{% trans "Abandonar" %}</button>
+        {% else %}
+            <script type="text/ng-template" id="leave-all-one.html">
+                <div class="modal-body text-xs-center">
+                    <p class="lead">{% trans "Esté viaje tiene más de una ocurrencia, ¿quieres abandonar todos o sólo este?" %}</p>
+                    <button class="btn btn-lg btn-danger" type="button" ng-click="cancel($event)">{% trans "Cancelar" %}</button>
+                    <button class="btn btn-lg btn-success" type="button" ng-click="one($event)">{% trans "Abandonar sólo este" %}</button>
+                    <button class="btn btn-lg btn-success" type="button" ng-click="all($event)">{% trans "Abandonar todos" %}</button>
+                </div>
+            </script>
+            <input type="hidden" name="leave_from" ng-value="leaveFromValue">
+            <button type="submit" class="btn btn-danger">{% trans "Abandonar" %}</button>
+        {% endif %}
     </form>
 {% endif %}

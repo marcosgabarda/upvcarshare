@@ -240,9 +240,13 @@ class LeaveJourneyView(LoginRequiredMixin, View):
 
     def post(self, request, pk):
         journey = get_object_or_404(Journey, pk=pk)
+        leave_from = request.POST.get("leave_from")
         try:
-            journey.leave_passenger(request.user)
-            messages.success(request, _('Has dejado el viaje'))
+            journey.leave_passenger(request.user, leave_from=leave_from)
+            if leave_from == "one":
+                messages.success(request, _('Has dejado el viaje'))
+            elif leave_from == "all":
+                messages.success(request, _('Has dejado todos los viajes'))
         except NotAPassenger:
             messages.success(request, _('No estás en este viaje'))
         return_to = request.POST.get("return_to", self.return_to)

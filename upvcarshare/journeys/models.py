@@ -377,16 +377,31 @@ class Journey(GisTimeStampedModel):
     @dispatch(LEAVE)
     def leave_passenger(self, user, leave_from=None):
         """A user leave a journey.
+        :param leave_from:
         :param user:
         """
-        self._leave_passenger(user=user)
+        # Join only one
+        if leave_from is None or leave_from == "one":
+            return self._leave_passenger(user=user)
+        # Join to recurrence
+        elif leave_from is not None and leave_from == "all":
+            if self.has_recurrence:
+                journeys = self.brothers(exclude_myself=True)
+                journeys = journeys.filter(departure__gte=self.departure)
+                passengers = [self._leave_passenger(user=user)]
+                for journey in journeys:
+                    try:
+                        passengers.append(journey.leave_passenger(user))
+                    except NotAPassenger:
+                        pass
+                return passengers
 
     @dispatch(THROW_OUT)
     def throw_out(self, user):
         """A user is throw out from a journey.
         :param user:
         """
-        self.leave_passenger(user)
+        self.leave_passenger(user, leave_from="all")
 
     @dispatch(CONFIRM)
     def confirm_passenger(self, user):

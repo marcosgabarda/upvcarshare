@@ -17,10 +17,17 @@
             {% if request.user == journey.driver and request.user == journey.user %}
                 {% if passenger.status == CONFIRMED %}
                     <td colspan="2">
-                        <form method="post" action="{% url "journeys:throw-out" passenger.pk %}">
+                        <form method="post" action="{% url "journeys:throw-out" passenger.pk %}" {% if passenger.has_recurrence %}throw-passenger-form{% endif %}>
                             {% csrf_token %}
                             <input type="hidden" name="return_to" value="{{ request.path }}">
                             <button type="submit" class="btn btn-danger">{% trans "Expulsar" %}</button>
+                            <script type="text/ng-template" id="throw-passenger.html">
+                              <div class="modal-body text-xs-center">
+                                <p class="lead">{% trans "El usuario se ha apuntado a más de una de las ocurrencias de este viaje" %}</p>
+                                <button class="btn btn-lg btn-danger" type="button" ng-click="cancel($event)">{% trans "Cancelar" %}</button>
+                                <button class="btn btn-lg btn-success" type="button" ng-click="continue($event)">{% trans "Expulsar para todos" %}</button>
+                              </div>
+                            </script>
                         </form>
                     </td>
                 {% else %}

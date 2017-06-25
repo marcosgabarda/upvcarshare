@@ -511,6 +511,31 @@ class JoinAllOneController {
 JoinAllOneController.$inject = ["$scope", "$uibModalInstance", 'JourneyService', 'uiCalendarConfig', 'journeyId'];
 
 
+/**
+ * Controller for the modal showed when a journey has repetitions.
+ */
+class LeaveAllOneController {
+  constructor($scope, $uibModalInstance, journeyId) {
+    this.$scope = $scope;
+    this.$uibModalInstance = $uibModalInstance;
+    this.journeyId = journeyId;
+  }
+
+  $onInit() {
+    this.$scope.cancel = ($event) => {
+      this.$uibModalInstance.dismiss(false);
+    };
+    this.$scope.one = ($event) => {
+      this.$uibModalInstance.close("one");
+    };
+    this.$scope.all = ($event) => {
+      this.$uibModalInstance.close("all");
+    };
+  }
+}
+LeaveAllOneController.$inject = ["$scope", "$uibModalInstance", 'journeyId'];
+
+
 class RecurrenceCalendarController {
 
   constructor($scope, JourneyService, uiCalendarConfig) {
@@ -624,6 +649,26 @@ class ConfirmRejectPassengerController {
 }
 ConfirmRejectPassengerController.$inject = ["$scope", "$uibModalInstance"];
 
+
+class ConfirmThrowPassengerController {
+  constructor($scope, $uibModalInstance) {
+    this.$scope = $scope;
+    this.$uibModalInstance = $uibModalInstance;
+  }
+
+  $onInit() {
+    this.$scope.continue = ($event) => {
+      this.$uibModalInstance.close(true);
+    };
+    this.$scope.cancel = ($event) => {
+      this.$uibModalInstance.dismiss(false);
+    };
+  }
+}
+ConfirmThrowPassengerController.$inject = ["$scope", "$uibModalInstance"];
+
+
 export {OriginDestinationSelectController, DatetimeController, TimeController,
   DateController, CalendarController, CircleMapController, JoinAllOneController,
-  RecurrenceCalendarController, ConfirmRejectPassengerController};
+  RecurrenceCalendarController, ConfirmRejectPassengerController,
+  LeaveAllOneController, ConfirmThrowPassengerController};

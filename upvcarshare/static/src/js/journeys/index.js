@@ -16,7 +16,9 @@ import {
   SearchJourneyForm,
   ConfirmPassengerForm,
   RejectPassengerForm,
-  ResidenceForm
+  ResidenceForm,
+  LeaveJourneyForm,
+  ThrowPassengerForm
 } from './journey.directive';
 import JoinAllOneController from './journeys.controller';
 
@@ -54,7 +56,9 @@ const journeys = angular
   .directive('residenceForm', ResidenceForm)
   .directive('searchJourneyForm', SearchJourneyForm)
   .directive('joinJourneyForm', JoinJourneyForm)
+  .directive('leaveJourneyForm', LeaveJourneyForm)
   .directive('confirmPassengerForm', ConfirmPassengerForm)
+  .directive('throwPassengerForm', ThrowPassengerForm)
   .directive('rejectPassengerForm', RejectPassengerForm)
 
   // Angular Google Maps
