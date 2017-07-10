@@ -25,6 +25,10 @@ DATABASES = {
 DATABASES['default']['PORT'] = str(DATABASES['default']['PORT'])  # Fix a problem with Oracle connector
 DATABASES['default']['ATOMIC_REQUESTS'] = True
 
+# DEBUG
+# ------------------------------------------------------------------------------
+DEBUG = True
+TEMPLATES[0]['OPTIONS']['debug'] = DEBUG
 
 # DJANGO DEBUG TOOLBAR
 # ------------------------------------------------------------------------------
