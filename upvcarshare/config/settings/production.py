@@ -31,7 +31,7 @@ DATABASES['default']['ATOMIC_REQUESTS'] = True
 MIDDLEWARE += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
 INSTALLED_APPS += ('debug_toolbar', )
 
-INTERNAL_IPS = ['127.0.0.1', '10.0.2.2', 'carsdes.cc.upv.es']
+INTERNAL_IPS = ['127.0.0.1', '10.0.2.2', 'carsdes.cc.upv.es', '158.42.4.121']
 
 DEBUG_TOOLBAR_CONFIG = {
     'DISABLE_PANELS': [
