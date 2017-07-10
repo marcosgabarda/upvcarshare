@@ -63,3 +63,11 @@ if settings.DEBUG:
     ]
     # Media URLs on debug
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+    # If is installed debug_toolbar, add its urls
+    if 'debug_toolbar' in settings.INSTALLED_APPS:
+        import debug_toolbar
+
+        urlpatterns += [
+            url(r'^__debug__/', include(debug_toolbar.urls)),
+        ]
