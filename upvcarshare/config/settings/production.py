@@ -24,22 +24,3 @@ DATABASES = {
 }
 DATABASES['default']['PORT'] = str(DATABASES['default']['PORT'])  # Fix a problem with Oracle connector
 DATABASES['default']['ATOMIC_REQUESTS'] = True
-
-# DEBUG
-# ------------------------------------------------------------------------------
-DEBUG = True
-TEMPLATES[0]['OPTIONS']['debug'] = DEBUG
-
-# DJANGO DEBUG TOOLBAR
-# ------------------------------------------------------------------------------
-MIDDLEWARE += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
-INSTALLED_APPS += ('debug_toolbar', )
-
-INTERNAL_IPS = ['127.0.0.1', '10.0.2.2', 'carsdes.cc.upv.es', '158.42.4.121']
-
-DEBUG_TOOLBAR_CONFIG = {
-    'DISABLE_PANELS': [
-        'debug_toolbar.panels.redirects.RedirectsPanel',
-    ],
-    'SHOW_TEMPLATE_CONTEXT': True,
-}
