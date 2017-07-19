@@ -367,6 +367,7 @@ class SearchJourneysView(LoginRequiredMixin, View):
         form = SearchJourneyForm(request.POST)
         if form.is_valid():
             journeys = form.search(user=request.user)
+            journeys = journeys.exclude(template__user=request.user)
         data = {
             "form": form,
             "journeys": journeys,
