@@ -44,3 +44,17 @@ NOTEBOOK_ARGUMENTS = [
 UPV_LOGIN_IGNORE = True
 UPV_LOGIN_DATA_USERNAME = env("UPV_LOGIN_DATA_USERNAME")
 UPV_LOGIN_DATA_PASSWORD = env("UPV_LOGIN_DATA_PASSWORD")
+
+# DJANGO DEBUG TOOLBAR
+# ------------------------------------------------------------------------------
+MIDDLEWARE += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
+INSTALLED_APPS += ('debug_toolbar', )
+
+INTERNAL_IPS = ['127.0.0.1', ]
+
+DEBUG_TOOLBAR_CONFIG = {
+    'DISABLE_PANELS': [
+        'debug_toolbar.panels.redirects.RedirectsPanel',
+    ],
+    'SHOW_TEMPLATE_CONTEXT': True,
+}

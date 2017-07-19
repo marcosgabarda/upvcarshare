@@ -286,7 +286,7 @@ LOGGING = {
         },
         'development_only': {
             '()': 'django.utils.log.RequireDebugTrue',
-        }
+        },
     },
     'formatters': {
         'verbose': {
@@ -318,6 +318,22 @@ LOGGING = {
             'class': 'logutils.colorize.ColorizingStreamHandler',
             'formatter': 'simple',
         },
+        'file_log': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': join(DJANGO_ROOT, 'logs/log.log'),
+            'maxBytes': 1024 * 1024,
+            'backupCount': 3,
+            'formatter': 'verbose',
+        },
+        'file_sql': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': join(DJANGO_ROOT, 'logs/sql.log'),
+            'maxBytes': 1024 * 1024,
+            'backupCount': 3,
+            'formatter': 'verbose',
+        },
         'mail_admins': {
             'level': 'ERROR',
             'filters': ['production_only'],
@@ -328,10 +344,16 @@ LOGGING = {
     # Catch-all modules that use logging
     # Writes to console and file on development, only to console on production
     'root': {
-        'handlers': ['console_dev', 'console_prod'],
+        'handlers': ['console_dev', 'console_prod', 'file_log'],
         'level': 'DEBUG',
     },
     'loggers': {
+        # Write all SQL queries to a file
+        'django.db.backends': {
+            'handlers': ['file_sql'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
         # Ignore DisallowedHost
         'django.security.DisallowedHost': {
             'handlers': ['null'],
