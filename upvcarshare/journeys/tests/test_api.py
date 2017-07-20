@@ -107,8 +107,8 @@ class JourneyAPITest(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response_data = json.loads(response.content.decode('utf-8'))
-        self.assertIsNotNone(response_data["residence"])
-        self.assertIsNotNone(response_data["campus"])
+        self.assertIsNotNone(response_data["id"])
+        self.assertIsNotNone(response_data["title"])
 
     def test_join_journey(self):
         user = UserFactory()

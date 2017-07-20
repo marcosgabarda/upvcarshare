@@ -9,7 +9,6 @@ from journeys.helpers import make_point_projected
 from journeys.models import Transport, Place, Residence, Campus, Journey, Message
 from notifications import MESSAGE
 from notifications.decorators import dispatch
-from notifications.helpers import dispatch_message
 from users.api.v1.serializers import UserSerializer
 
 
@@ -49,12 +48,7 @@ class CampusSerializer(PlaceSerializer):
         model = Campus
 
 
-class JourneySerializer(serializers.ModelSerializer):
-
-    user = UserSerializer()
-    residence = ResidenceSerializer()
-    campus = CampusSerializer()
-    driver = UserSerializer()
+class JourneySerializer(serializers.HyperlinkedModelSerializer):
 
     title = serializers.CharField(source="get_title", read_only=True)
     start = serializers.CharField(source="get_start", read_only=True)
@@ -64,8 +58,18 @@ class JourneySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Journey
-        fields = ["id", "user", "title", "driver", "residence", "campus", "kind", "free_places", "departure",
-                  "arrival", "start", "end", "disabled", "current_free_places"]
+        fields = [
+            "id",
+            "title",
+            "kind",
+            "free_places",
+            "departure",
+            "arrival",
+            "start",
+            "end",
+            "disabled",
+            "current_free_places",
+        ]
 
 
 class MessageSerializer(serializers.ModelSerializer):
