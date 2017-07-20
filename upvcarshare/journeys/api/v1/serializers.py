@@ -50,6 +50,11 @@ class CampusSerializer(PlaceSerializer):
 
 class JourneySerializer(serializers.HyperlinkedModelSerializer):
 
+    user = UserSerializer()
+    residence = ResidenceSerializer()
+    campus = CampusSerializer()
+    driver = UserSerializer()
+
     title = serializers.CharField(source="get_title", read_only=True)
     start = serializers.CharField(source="get_start", read_only=True)
     end = serializers.CharField(source="get_end", read_only=True)
@@ -69,6 +74,10 @@ class JourneySerializer(serializers.HyperlinkedModelSerializer):
             "end",
             "disabled",
             "current_free_places",
+            "user",
+            "residence",
+            "campus",
+            "driver",
         ]
 
 
