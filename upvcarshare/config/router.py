@@ -8,10 +8,11 @@ from journeys.api.v1.resources import TransportResource, ResidenceResource, Camp
     join_journey, leave_journey, recommended_journeys, cancel_journey, journey_messages, MessageResource, \
     confirm_journey, reject_journey, recurrence_journeys
 from notifications.api.v1.resources import NotificationResource
-from users.api.v1.resources import me
+from users.api.v1.resources import me, UserResource
 
 router = SimpleRouter()
 
+router.register(r'users', viewset=UserResource)
 router.register(r'transports', viewset=TransportResource)
 router.register(r'residences', viewset=ResidenceResource)
 router.register(r'campus', viewset=CampusResource)
