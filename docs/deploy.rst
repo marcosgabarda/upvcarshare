@@ -1,14 +1,15 @@
 Despliegue en CentOS
 ====================
 
-Instrucciones para la instalación de poli Car en un servidor **CentOS 7.2**.
+Instrucciones para la instalación de poliCar en un servidor **CentOS 7.2**.
 
 Dependencias de yum
 -------------------
 
 .. code-block:: console
 
-    $ yum install libjpeg-devel zlib-devel gcc python-devel libcap-devel supervisor gdal gdal-devel yum-utils
+    $ yum install libjpeg-devel zlib-devel gcc python-devel libcap-devel supervisor gdal \
+    gdal-devel yum-utils
 
 Instalar Python 3
 -----------------
@@ -105,7 +106,7 @@ varios lugares, pero se recomienda crear el fichero ``.env`` en la carpeta raíz
 
 .. code-block:: bash
 
-    # Poli Car project environment variables
+    # poliCar project environment variables
     # ------------------------------------------------------------------------------
 
     ORACLE_SID=ZETATEST
@@ -187,7 +188,7 @@ Recopilar los ficheros estáticos:
 uWSGI
 -----
 
-Poli Car sigue el `PEP 333 <https://www.python.org/dev/peps/pep-0333/>`_ para aplicaciones web hechas con Python,
+La aplicación poliCar sigue el `PEP 333 <https://www.python.org/dev/peps/pep-0333/>`_ para aplicaciones web hechas con Python,
 por lo que cualquier servidor de aplicaciones WSGI sería compatible con la aplicación.
 
 Sin embargo, se recomienda el uso de ``uWSGI`` como servidor de aplicaciones WSGI, que es el que se instala junto al
