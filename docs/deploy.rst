@@ -53,21 +53,35 @@ instalar y configurar ``virtualenvwrapper``.
 
 .. code-block:: console
 
-    $ sudo pip install virtualenv virtualenvwrapper
+    $ sudo pip3 install virtualenv virtualenvwrapper
 
 Hay que añadir lo siguiente al fichero ``.bashrc`` del usuario que se vaya a usar para instalar el proyecto, **no**
 en el de root.
 
 .. code-block:: bash
 
+    export VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python3
     export WORKON_HOME=$HOME/.virtualenvs
-    source /usr/bin/virtualenvwrapper.sh
+    source /usr/local/bin/virtualenvwrapper.sh
 
 Para que los cambios tengan efecto, recargamos el fichero ``.bashrc``:
 
 .. code-block:: console
 
     $ source ~/.bashrc
+
+Agregar clave pública a GitLab
+------------------------------
+
+Se necesita una clave publica SSH para poder clonar el repositorio de Git
+con el código fuente:
+
+.. code-block:: console
+
+    $ ssh-keygen -t rsa
+    $ cat ~/.ssh/id_rsa.pub
+
+El resultado se tiene que copiar como *Deploy key* en el proyecto de Git.
 
 Instalar proyecto
 -----------------
