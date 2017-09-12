@@ -8,7 +8,7 @@ Dependencias de yum
 
 .. code-block:: console
 
-    $ yum install libjpeg-devel zlib-devel gcc python-devel libcap-devel supervisor gdal \
+    $ sudo yum install libjpeg-devel zlib-devel gcc python-devel libcap-devel supervisor gdal \
     gdal-devel yum-utils
 
 Instalar Python 3
