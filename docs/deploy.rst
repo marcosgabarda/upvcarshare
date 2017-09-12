@@ -112,13 +112,13 @@ varios lugares, pero se recomienda crear el fichero ``.env`` en la carpeta raíz
     ORACLE_SID=ZETATEST
 
     DJANGO_SETTINGS_MODULE=config.settings.production
-    DJANGO_ALLOWED_HOSTS=carsdes.cc.upv.es
-    DJANGO_SECRET_KEY=someseed
+    DJANGO_ALLOWED_HOSTS=host
+    DJANGO_SECRET_KEY=some-seed
     DATABASE_URL=oraclegis://{username}:{password}@{host}:{port}/{database}
     DJANGO_DEBUG=False
 
-    UPV_LOGIN_DATA_USERNAME=carshare
-    UPV_LOGIN_DATA_PASSWORD=SW2017-03:dLogin<b
+    UPV_LOGIN_DATA_USERNAME=user
+    UPV_LOGIN_DATA_PASSWORD=password
 
 .. glossary::
 
